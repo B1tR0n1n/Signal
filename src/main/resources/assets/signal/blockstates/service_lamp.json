@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "lit=false": {
+      "model": "signal:block/service_lamp_off"
+    },
+    "lit=true": {
+      "model": "signal:block/service_lamp_on"
+    }
+  }
+}

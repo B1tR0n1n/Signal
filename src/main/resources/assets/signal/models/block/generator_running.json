@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/orientable",
+  "textures": {
+    "top": "signal:block/machine_top",
+    "front": "signal:block/generator_front_running",
+    "side": "signal:block/machine_side"
+  }
+}

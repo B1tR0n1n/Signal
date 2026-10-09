@@ -1,0 +1,64 @@
+{
+  "variants": {
+    "facing=north,pressure=0": {
+      "model": "signal:block/pump_controller_0"
+    },
+    "facing=north,pressure=1": {
+      "model": "signal:block/pump_controller_1"
+    },
+    "facing=north,pressure=2": {
+      "model": "signal:block/pump_controller_2"
+    },
+    "facing=north,pressure=3": {
+      "model": "signal:block/pump_controller_3"
+    },
+    "facing=east,pressure=0": {
+      "model": "signal:block/pump_controller_0",
+      "y": 90
+    },
+    "facing=east,pressure=1": {
+      "model": "signal:block/pump_controller_1",
+      "y": 90
+    },
+    "facing=east,pressure=2": {
+      "model": "signal:block/pump_controller_2",
+      "y": 90
+    },
+    "facing=east,pressure=3": {
+      "model": "signal:block/pump_controller_3",
+      "y": 90
+    },
+    "facing=south,pressure=0": {
+      "model": "signal:block/pump_controller_0",
+      "y": 180
+    },
+    "facing=south,pressure=1": {
+      "model": "signal:block/pump_controller_1",
+      "y": 180
+    },
+    "facing=south,pressure=2": {
+      "model": "signal:block/pump_controller_2",
+      "y": 180
+    },
+    "facing=south,pressure=3": {
+      "model": "signal:block/pump_controller_3",
+      "y": 180
+    },
+    "facing=west,pressure=0": {
+      "model": "signal:block/pump_controller_0",
+      "y": 270
+    },
+    "facing=west,pressure=1": {
+      "model": "signal:block/pump_controller_1",
+      "y": 270
+    },
+    "facing=west,pressure=2": {
+      "model": "signal:block/pump_controller_2",
+      "y": 270
+    },
+    "facing=west,pressure=3": {
+      "model": "signal:block/pump_controller_3",
+      "y": 270
+    }
+  }
+}

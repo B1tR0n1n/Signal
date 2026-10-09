@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/orientable",
+  "textures": {
+    "top": "signal:block/machine_top",
+    "front": "signal:block/pump_controller_front_2",
+    "side": "signal:block/machine_side"
+  }
+}
