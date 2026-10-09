@@ -84,6 +84,10 @@ minecraft {
         client {
             // Comma-separated list of namespaces to load gametests from. Empty = all namespaces.
             property 'forge.enabledGameTestNamespaces', mod_id
+            // Optional dev convenience: ./gradlew runClient -PquickPlayWorld=<save folder in run/saves>
+            if (project.hasProperty('quickPlayWorld')) {
+                args '--quickPlaySingleplayer', project.property('quickPlayWorld')
+            }
         }
 
         server {

@@ -28,9 +28,13 @@ import java.util.Map;
  * <p>Fully keyboard operable: Tab/Shift+Tab move between buttons, Enter/Space activates, Esc closes.
  */
 public class PanelScreen extends Screen {
-    private static final int PANEL_W = 340;
-    private static final int PANEL_H = 236;
-    private static final int BG = 0xE0181A17;
+    private static final int PANEL_W = 372;
+    private static final int PANEL_H = 240;
+    /** Left column: applied state, proposal toggles, last server status. Right column: preview. */
+    private static final int LEFT_W = 176;
+    private static final int RIGHT_X = LEFT_W + 20;
+    private static final int BG = 0xF4181A17;
+    private static final String STATUS_STALE = "screen.signal.panel.status.stale";
     private static final int FRAME = 0xFF5A5F45;
     private static final int TEXT = 0xFFD8CFB2;
     private static final int DIM = 0xFF8C8670;
@@ -55,11 +59,14 @@ public class PanelScreen extends Screen {
         return snapshot.pos().equals(pos);
     }
 
-    /** Fresh server snapshot. The proposal is reset to the applied state whenever the server state moved. */
+    /**
+     * Fresh server snapshot. The player's unapplied proposal survives their own actions (e.g. fitting the
+     * fuse) and is re-previewed against the new state; after a rejected stale apply it is reset to what is
+     * actually applied, so the player sees the truth before trying again.
+     */
     public void update(PanelSnapshot fresh) {
-        boolean moved = fresh.revision() != snapshot.revision();
         snapshot = fresh;
-        if (moved) {
+        if (STATUS_STALE.equals(fresh.status())) {
             proposal.clear();
             proposal.addAll(fresh.configured());
         }
@@ -71,28 +78,28 @@ public class PanelScreen extends Screen {
         left = (width - PANEL_W) / 2;
         top = (height - PANEL_H) / 2;
         toggles.clear();
-        int y = top + 104;
+        int y = top + 108;
         for (Service s : Service.values()) {
             Button b = Button.builder(toggleLabel(s), btn -> {
                 if (!proposal.remove(s)) {
                     proposal.add(s);
                 }
                 refreshWidgets();
-            }).bounds(left + 10, y, 150, 18).build();
+            }).bounds(left + 10, y, LEFT_W, 18).build();
             toggles.put(s, addRenderableWidget(b));
             y += 21;
         }
         applyButton = addRenderableWidget(Button.builder(Component.translatable("screen.signal.panel.apply"), b ->
                         SignalNetwork.CHANNEL.sendToServer(new SignalNetwork.ApplyAllocation(snapshot.pos(), PanelSnapshot.mask(proposal), snapshot.revision())))
-                .bounds(left + 10, top + PANEL_H - 28, 76, 20).build());
+                .bounds(left + 10, top + PANEL_H - 28, 84, 20).build());
         addRenderableWidget(Button.builder(Component.translatable("screen.signal.panel.revert"), b -> {
             proposal.clear();
             proposal.addAll(snapshot.configured());
             refreshWidgets();
-        }).bounds(left + 90, top + PANEL_H - 28, 76, 20).build());
+        }).bounds(left + 102, top + PANEL_H - 28, 84, 20).build());
         fuseButton = addRenderableWidget(Button.builder(Component.translatable("screen.signal.panel.install_fuse"), b ->
                         SignalNetwork.CHANNEL.sendToServer(new SignalNetwork.InstallFuse(snapshot.pos(), snapshot.revision())))
-                .bounds(left + 170, top + PANEL_H - 28, 90, 20).build());
+                .bounds(left + RIGHT_X, top + PANEL_H - 28, 96, 20).build());
         addRenderableWidget(Button.builder(Component.translatable("screen.signal.panel.close"), b -> onClose())
                 .bounds(left + PANEL_W - 74, top + PANEL_H - 28, 64, 20).build());
         refreshWidgets();
@@ -101,8 +108,12 @@ public class PanelScreen extends Screen {
     private Component toggleLabel(Service s) {
         String box = proposal.contains(s) ? "[x] " : "[ ] ";
         return Component.literal(box).append(Component.translatable("service.signal." + s.id()))
-                .append(Component.literal(" - " + s.demand() + " "))
-                .append(Component.translatable("screen.signal.units"));
+                .append(Component.literal(" - "))
+                .append(units(s.demand()));
+    }
+
+    private static Component units(int n) {
+        return Component.translatable(n == 1 ? "screen.signal.units.one" : "screen.signal.units.many", n);
     }
 
     private void refreshWidgets() {
@@ -152,12 +163,13 @@ public class PanelScreen extends Screen {
         }
 
         // ----- proposal -----
-        g.drawString(font, Component.translatable("screen.signal.panel.proposed").withStyle(ChatFormatting.UNDERLINE), left + 10, top + 92, DIM, false);
+        g.drawString(font, Component.translatable("screen.signal.panel.proposed").withStyle(ChatFormatting.UNDERLINE), left + 10, top + 96, DIM, false);
+        g.vLine(left + RIGHT_X - 8, top + 24, top + PANEL_H - 36, FRAME);
 
-        // ----- preview (right column) -----
-        int px = left + 172;
-        int py = top + 92;
-        int pw = PANEL_W - 182;
+        // ----- preview (right column, full height) -----
+        int px = left + RIGHT_X;
+        int py = top + 26;
+        int pw = PANEL_W - RIGHT_X - 10;
         g.drawString(font, Component.translatable("screen.signal.panel.preview").withStyle(ChatFormatting.UNDERLINE), px, py, DIM, false);
         py += 12;
         for (Component c : previewLines(bus.preview(proposal), bus)) {
@@ -168,9 +180,13 @@ public class PanelScreen extends Screen {
             py += 2;
         }
 
-        // ----- server status of the last action -----
+        // ----- server status of the last action (left column, wrapped) -----
         if (!snapshot.status().isEmpty()) {
-            g.drawString(font, Component.translatable(snapshot.status()), left + 10, top + PANEL_H - 42, WARN, false);
+            int sy = top + 176;
+            for (FormattedCharSequence seq : font.split(Component.translatable(snapshot.status()), LEFT_W)) {
+                g.drawString(font, seq, left + 10, sy, WARN, false);
+                sy += 10;
+            }
         }
         super.render(g, mouseX, mouseY, partialTick);
     }
@@ -179,6 +195,9 @@ public class PanelScreen extends Screen {
         List<Component> out = new ArrayList<>();
         if (p.requested().isEmpty()) {
             out.add(Component.translatable("screen.signal.preview.none"));
+            if (!snapshot.fuseInstalled()) {
+                out.add(Component.translatable(snapshot.playerHasFuse() ? "screen.signal.preview.fuse_ready" : "screen.signal.preview.fuse_needed"));
+            }
             return out;
         }
         MutableComponent breakdown = Component.empty();
