@@ -75,3 +75,7 @@ Reversible choices made during implementation. Newest last.
 28. **Tower R4** is 34 m to the deck with a caged ladder on a solid concrete riser, hatches through both
     platforms (cage opens where you step off), a railed deck with one section missing, and the canted antenna.
 29. **Shaders are supported, not bundled.** See `docs/GRAPHICS.md`; nothing third-party ships in the JAR.
+30. **World-generated block entities never block the guard.** Mob spawners, trial spawners, vaults and
+    containers still holding their unrolled loot table (an unopened dungeon or buried chest) are exempt at any
+    depth, because survival play cannot place them. An opened loot chest looks like a placed one and still
+    counts. Found in play: an unopened dungeon chest 40 blocks under a hill refused the whole site.

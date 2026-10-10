@@ -3,12 +3,17 @@ package io.github.b1tr0n1n.signal.scenario;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.world.RandomizableContainer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.SpawnerBlockEntity;
+import net.minecraft.world.level.block.entity.TrialSpawnerBlockEntity;
+import net.minecraft.world.level.block.entity.vault.VaultBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.phys.AABB;
@@ -20,7 +25,8 @@ import java.util.List;
 /**
  * Refuses to build over anything that looks like player work. Natural terrain (soil, stone, sand,
  * vegetation, trees, water, snow, ice) may be cleared; anything else, any block entity (chests, signs)
- * and any non-mob entity (item frames, armor stands, minecarts) blocks construction.
+ * other than world-generated ones (spawners, unopened loot chests), and any non-mob entity (item frames,
+ * armor stands, minecarts) blocks construction.
  */
 public final class ScenarioGuard {
     private ScenarioGuard() {
@@ -55,8 +61,10 @@ public final class ScenarioGuard {
                 for (int y = box.minY(); y <= box.maxY(); y++) {
                     p.set(x, y, z);
                     BlockState s = level.getBlockState(p);
-                    boolean hasEntity = level.getBlockEntity(p) != null;
-                    if (hasEntity || y >= deep && !isNatural(s)) {
+                    BlockEntity be = level.getBlockEntity(p);
+                    boolean generated = be != null && isWorldGenerated(be);
+                    boolean hasEntity = be != null && !generated;
+                    if (hasEntity || y >= deep && !generated && !isNatural(s)) {
                         occupied++;
                         if (first == null) {
                             first = p.immutable();
@@ -77,6 +85,19 @@ public final class ScenarioGuard {
             }
         }
         return new Report(occupied == 0, occupied, first, occupied == 0 ? null : "command.signal.scenario.occupied", what);
+    }
+
+    /**
+     * Block entities only world generation produces: mob spawners, trial spawners, vaults, and containers
+     * still holding their unrolled loot table (a dungeon or buried chest nobody has opened). Survival play
+     * cannot place any of these, so they are never player work. An opened loot chest is indistinguishable
+     * from a placed one and still counts.
+     */
+    public static boolean isWorldGenerated(BlockEntity be) {
+        return be instanceof SpawnerBlockEntity
+                || be instanceof TrialSpawnerBlockEntity
+                || be instanceof VaultBlockEntity
+                || be instanceof RandomizableContainer container && container.getLootTable() != null;
     }
 
     public static boolean isNatural(BlockState s) {

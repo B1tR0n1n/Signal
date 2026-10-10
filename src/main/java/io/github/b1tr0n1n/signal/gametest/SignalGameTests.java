@@ -35,8 +35,10 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LayeredCauldronBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
+import net.minecraft.world.level.storage.loot.BuiltInLootTables;
 import com.mojang.authlib.GameProfile;
 import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import net.neoforged.neoforge.gametest.GameTestHolder;
@@ -278,6 +280,14 @@ public final class SignalGameTests {
         helper.setBlock(new BlockPos(2, 2, 2), Blocks.CHEST);
         ScenarioGuard.Report r = ScenarioGuard.check(level, box);
         check(!r.ok() && r.occupied() >= 1, "chest must block construction");
+        // A dungeon's spawner and unopened loot chest are world generation, not player work.
+        helper.setBlock(new BlockPos(2, 2, 2), Blocks.SPAWNER);
+        helper.setBlock(new BlockPos(3, 2, 2), Blocks.CHEST);
+        if (level.getBlockEntity(helper.absolutePos(new BlockPos(3, 2, 2))) instanceof ChestBlockEntity loot) {
+            loot.setLootTable(BuiltInLootTables.SIMPLE_DUNGEON, 7L);
+        }
+        check(ScenarioGuard.check(level, box).ok(), "dungeon spawner and unopened loot chest must be accepted");
+        helper.setBlock(new BlockPos(3, 2, 2), Blocks.AIR);
         helper.setBlock(new BlockPos(2, 2, 2), Blocks.AIR);
         helper.setBlock(new BlockPos(3, 2, 3), Blocks.OAK_PLANKS);
         check(!ScenarioGuard.check(level, box).ok(), "planks must block construction");
