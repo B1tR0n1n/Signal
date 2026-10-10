@@ -30,6 +30,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
@@ -56,6 +57,15 @@ import java.util.UUID;
 @PrefixGameTestTemplate(false)
 public final class SignalGameTests {
     private SignalGameTests() {
+    }
+
+    private static boolean touches(ServerLevel level, BlockPos p, java.util.function.Predicate<BlockState> joins) {
+        for (net.minecraft.core.Direction d : net.minecraft.core.Direction.values()) {
+            if (joins.test(level.getBlockState(p.relative(d)))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static void check(boolean condition, String message) {
@@ -158,6 +168,22 @@ public final class SignalGameTests {
             check(level.getBlockState(towerBase.offset(0, y, 1)).is(Blocks.LADDER), "ladder missing at +" + y);
             check(level.getBlockState(towerBase.offset(0, y, 0)).isSolid(), "ladder riser not solid at +" + y);
         }
+        // No floating pieces: every tower bar joins a neighbour, and every cable link touches another link or
+        // a pole (chains and bars only render joined side by side or stacked, never corner to corner).
+        int chains = 0;
+        for (BlockPos p : BlockPos.betweenClosed(towerBase.offset(-3, 1, -3), towerBase.offset(3, 27, 3))) {
+            if (level.getBlockState(p).is(Blocks.IRON_BARS)) {
+                check(touches(level, p, s -> s.is(Blocks.IRON_BARS) || s.is(BlockTags.WALLS) || s.isSolid()), "loose tower bar at " + p);
+            }
+        }
+        BoundingBox b = data.bounds();
+        for (BlockPos p : BlockPos.betweenClosed(b.minX(), b.minY(), b.minZ(), b.maxX(), b.maxY(), b.maxZ())) {
+            if (level.getBlockState(p).is(Blocks.CHAIN)) {
+                chains++;
+                check(touches(level, p, s -> s.is(Blocks.CHAIN) || s.is(BlockTags.LOGS)), "loose cable link at " + p);
+            }
+        }
+        check(chains > 20, "power line cable missing (" + chains + " links)");
 
         // Fresh scenario: faulted, isolated, dark.
         check(bus.fuse() == FuseState.DAMAGED && bus.isolated(), "fresh scenario must be faulted and isolated");

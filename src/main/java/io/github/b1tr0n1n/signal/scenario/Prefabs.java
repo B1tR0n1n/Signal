@@ -65,15 +65,9 @@ final class Prefabs {
         for (int bay = 0; bay < 2; bay++) {
             int y0 = 1 + bay * 7;
             for (int i = 0; i <= 6; i++) {
-                int a = -3 + i, y1 = y0 + i, y2 = y0 + 6 - i;
-                for (int y : new int[]{y1, y2}) {
-                    if (y >= 1 && y <= 13 && Math.abs(a) < 3) {
-                        c.set(a, y, -3, bar);
-                        c.set(a, y, 3, bar);
-                        c.set(-3, y, a, bar);
-                        c.set(3, y, a, bar);
-                    }
-                }
+                int a = -3 + i;
+                brace(c, a, y0 + i, 1, 3, bar);
+                brace(c, a, y0 + 6 - i, -1, 3, bar);
             }
         }
         // Platform 1 at +14 with railing.
@@ -94,14 +88,8 @@ final class Prefabs {
             int y0 = 17 + bay * 5;
             for (int i = 0; i <= 4; i++) {
                 int a = -2 + i;
-                for (int y : new int[]{y0 + i, y0 + 4 - i}) {
-                    if (Math.abs(a) < 2) {
-                        c.set(a, y, -2, bar);
-                        c.set(a, y, 2, bar);
-                        c.set(-2, y, a, bar);
-                        c.set(2, y, a, bar);
-                    }
-                }
+                brace(c, a, y0 + i, 1, 2, bar);
+                brace(c, a, y0 + 4 - i, -1, 2, bar);
             }
         }
         // Top deck at +28 with railing (one rail section missing: "don't trust the top rail").
@@ -149,6 +137,23 @@ final class Prefabs {
         c.standingSign(0, 0, 4, 0, "R4 REGIONAL", "RELAY MAST", "CLIMB AT OWN", "RISK");
     }
 
+    /**
+     * One point of an X-brace on all four faces of a square section with legs at +-{@code half}. Iron bars
+     * only join side by side, so a pure diagonal renders as loose floating posts; each point also fills the
+     * cell beside it ({@code step} = +1 on a rising diagonal, -1 on a falling one), turning the diagonal into
+     * a connected staircase that meets the legs at both ends. Mirrored, so both diagonals stay symmetric.
+     */
+    private static void brace(SiteCanvas c, int a, int y, int step, int half, BlockState bar) {
+        for (int x : new int[]{a, a + step}) {
+            if (Math.abs(x) < half) {
+                c.set(x, y, -half, bar);
+                c.set(x, y, half, bar);
+                c.set(-half, y, x, bar);
+                c.set(half, y, x, bar);
+            }
+        }
+    }
+
     // ------------------------------------------------------------------ power line
 
     static void pole(SiteCanvas c, BlockPos base, Direction.Axis wireAxis) {
@@ -170,18 +175,49 @@ final class Prefabs {
 
     /** Sagging cable between two attachment points, drawn with chain. */
     static void wire(SiteCanvas c, BlockPos a, BlockPos b, double sag) {
+        // Chain is a rod along one axis, so the cable walks a 4-connected path (one axis per step): a
+        // diagonal of corner-touching chains would render as loose floating dashes.
         int dx = b.getX() - a.getX(), dz = b.getZ() - a.getZ();
-        int n = Math.max(Math.abs(dx), Math.abs(dz)) * 2;
-        Direction.Axis axis = Math.abs(dx) >= Math.abs(dz) ? Direction.Axis.X : Direction.Axis.Z;
-        BlockState chain = Blocks.CHAIN.defaultBlockState().setValue(ChainBlock.AXIS, axis);
-        for (int i = 1; i < n; i++) {
-            double t = i / (double) n;
-            double y = a.getY() + (b.getY() - a.getY()) * t - sag * 4 * t * (1 - t);
-            int x = (int) Math.round(a.getX() + dx * t), z = (int) Math.round(a.getZ() + dz * t);
-            int yy = (int) Math.round(y);
-            if (c.get(x, yy, z).isAir() || c.get(x, yy, z).is(net.minecraft.tags.BlockTags.LEAVES)) {
-                c.putSoft(x, yy, z, chain);
+        int ax = Math.abs(dx), az = Math.abs(dz), sx = Integer.signum(dx), sz = Integer.signum(dz);
+        int steps = ax + az;
+        int[] cx = new int[steps], cz = new int[steps], cy = new int[steps];
+        Direction.Axis[] along = new Direction.Axis[steps];
+        int x = a.getX(), z = a.getZ(), ix = 0, iz = 0;
+        for (int k = 0; k < steps; k++) {
+            boolean stepX = iz >= az || ix < ax && (ix + 0.5) / ax < (iz + 0.5) / az;
+            if (stepX) {
+                x += sx;
+                ix++;
+            } else {
+                z += sz;
+                iz++;
             }
+            double t = (k + 1) / (double) steps;
+            cx[k] = x;
+            cz[k] = z;
+            cy[k] = (int) Math.round(a.getY() + (b.getY() - a.getY()) * t - sag * 4 * t * (1 - t));
+            along[k] = stepX ? Direction.Axis.X : Direction.Axis.Z;
+        }
+        // The last cell is the far pole itself.
+        for (int k = 0; k < steps - 1; k++) {
+            link(c, cx[k], cy[k], cz[k], along[k]);
+            // Where the sag drops or climbs a level, hang a vertical link in the lower cell's column.
+            int next = k + 1 < steps - 1 ? cy[k + 1] : b.getY();
+            if (next != cy[k]) {
+                int col = next < cy[k] ? k + 1 : k;
+                if (col < steps - 1) {
+                    for (int y = Math.min(next, cy[k]) + 1; y <= Math.max(next, cy[k]); y++) {
+                        link(c, cx[col], y, cz[col], Direction.Axis.Y);
+                    }
+                }
+            }
+        }
+    }
+
+    private static void link(SiteCanvas c, int x, int y, int z, Direction.Axis axis) {
+        BlockState here = c.get(x, y, z);
+        if (here.isAir() || here.is(net.minecraft.tags.BlockTags.LEAVES) || here.is(Blocks.CHAIN)) {
+            c.putSoft(x, y, z, Blocks.CHAIN.defaultBlockState().setValue(ChainBlock.AXIS, axis));
         }
     }
 
