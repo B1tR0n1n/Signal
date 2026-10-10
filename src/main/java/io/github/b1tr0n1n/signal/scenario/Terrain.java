@@ -20,6 +20,7 @@ public final class Terrain {
     final int width;
     final int depth;
     private final int[] ground;
+    private final int[] water;
     private final boolean[] wet;
 
     private Terrain(int x0, int z0, int width, int depth) {
@@ -28,6 +29,7 @@ public final class Terrain {
         this.width = width;
         this.depth = depth;
         this.ground = new int[width * depth];
+        this.water = new int[width * depth];
         this.wet = new boolean[width * depth];
     }
 
@@ -41,10 +43,12 @@ public final class Terrain {
                 int z = z0 + dz;
                 int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
                 boolean water = false;
+                int surface = Integer.MIN_VALUE;
                 while (y > floor) {
                     BlockState s = level.getBlockState(p.set(x, y, z));
                     if (!s.getFluidState().isEmpty()) {
                         water = true;
+                        surface = Math.max(surface, y);
                     }
                     if (!isCover(s)) {
                         break;
@@ -52,6 +56,7 @@ public final class Terrain {
                     y--;
                 }
                 t.ground[dx * depth + dz] = y;
+                t.water[dx * depth + dz] = water ? surface : y;
                 t.wet[dx * depth + dz] = water;
             }
         }
@@ -86,6 +91,16 @@ public final class Terrain {
         return ground[dx * depth + dz];
     }
 
+    /**
+     * Where something built here should stand: the water surface over a lake or river, the ground elsewhere.
+     * Routes and pads use this, so a road crosses water as a causeway instead of a trench through the lake.
+     */
+    int level(int x, int z) {
+        int dx = Math.max(0, Math.min(width - 1, x - x0));
+        int dz = Math.max(0, Math.min(depth - 1, z - z0));
+        return water[dx * depth + dz];
+    }
+
     boolean wetAt(int x, int z) {
         int dx = Math.max(0, Math.min(width - 1, x - x0));
         int dz = Math.max(0, Math.min(depth - 1, z - z0));
@@ -116,7 +131,7 @@ public final class Terrain {
         int i = 0;
         for (int x = Math.min(ax, bx); x <= Math.max(ax, bx); x++) {
             for (int z = Math.min(az, bz); z <= Math.max(az, bz); z++) {
-                v[i++] = at(x, z);
+                v[i++] = level(x, z);
             }
         }
         Arrays.sort(v);
@@ -176,9 +191,9 @@ public final class Terrain {
                 if (d == 0) {
                     shape(c, x, z, padY, padTop.at(x, z), padY + clearHeight);
                 } else {
-                    int g = at(x, z);
+                    int g = level(x, z);
                     int target = (int) Math.round(padY + (g - padY) * blend(d, margin));
-                    if (target != g) {
+                    if (target != g && !(wetAt(x, z) && target <= g)) { // never dig into standing water
                         BlockState top = c.noise(x, z, 4.0) > 0.25 ? Blocks.COARSE_DIRT.defaultBlockState()
                                 : Blocks.GRASS_BLOCK.defaultBlockState();
                         shape(c, x, z, target, top, Math.max(target, g) + clearHeight / 2);

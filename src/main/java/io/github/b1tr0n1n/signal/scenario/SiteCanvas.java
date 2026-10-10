@@ -216,6 +216,37 @@ final class SiteCanvas {
         writeSign(rel(dx, dy, dz), lines);
     }
 
+    /**
+     * Final pass: known-shape writes never wake fluids, so water beside a cut would hang as a sheer wall.
+     * Every air cell inside the site that touches water or lava from the side or from above gets a mud bank,
+     * which holds the water where it is. (Puddles are already fully contained and are left alone.)
+     */
+    int containFluids() {
+        BlockState bank = Blocks.MUD.defaultBlockState();
+        Direction[] spill = {Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST, Direction.DOWN};
+        List<BlockPos> banks = new ArrayList<>();
+        BlockPos.MutableBlockPos p = new BlockPos.MutableBlockPos();
+        for (int x = bounds.minX(); x <= bounds.maxX(); x++) {
+            for (int z = bounds.minZ(); z <= bounds.maxZ(); z++) {
+                for (int y = bounds.minY(); y <= bounds.maxY(); y++) {
+                    if (level.getFluidState(p.set(x, y, z)).isEmpty()) {
+                        continue;
+                    }
+                    for (Direction d : spill) {
+                        BlockPos n = p.relative(d);
+                        if (bounds.isInside(n) && level.getBlockState(n).isAir()) {
+                            banks.add(n);
+                        }
+                    }
+                }
+            }
+        }
+        for (BlockPos n : banks) {
+            put(n, bank);
+        }
+        return banks.size();
+    }
+
     /** Final pass: connect bars, panes, fences, walls and stairs to their neighbours. */
     void finishShapes() {
         for (BlockPos p : needsShape) {

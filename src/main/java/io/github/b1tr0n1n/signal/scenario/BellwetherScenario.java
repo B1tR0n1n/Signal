@@ -166,6 +166,7 @@ public final class BellwetherScenario {
         // 9. Bellwether, down the slope to the south, with a footpath forking off the road.
         settlement(c, t, ax, az, road);
 
+        c.containFluids();
         c.finishShapes();
 
         // Start a few blocks into the established road, facing along it toward the distant tower.

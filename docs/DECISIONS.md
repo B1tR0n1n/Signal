@@ -79,3 +79,7 @@ Reversible choices made during implementation. Newest last.
     containers still holding their unrolled loot table (an unopened dungeon or buried chest) are exempt at any
     depth, because survival play cannot place them. An opened loot chest looks like a placed one and still
     counts. Found in play: an unopened dungeon chest 40 blocks under a hill refused the whole site.
+31. **Water is never cut into a wall.** Routes and pads stand on the water surface over lakes and rivers
+    (a causeway, not a trench), aprons never dig below standing water, and a final pass banks every air cell
+    that touches water or lava from the side or above with mud. Known-shape writes do not wake fluids, so
+    without this a cut beside a lake left the water hanging as a sheer wall (seen in play).

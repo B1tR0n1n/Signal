@@ -52,7 +52,7 @@ final class Paths {
         int n = pts.size();
         double[] h = new double[n];
         for (int i = 0; i < n; i++) {
-            h[i] = t.at((int) Math.floor(pts.get(i)[0]), (int) Math.floor(pts.get(i)[1])) + 1.0;
+            h[i] = t.level((int) Math.floor(pts.get(i)[0]), (int) Math.floor(pts.get(i)[1])) + 1.0;
         }
         // Moving average, then two-pass grade limit.
         double[] s = new double[n];
@@ -138,10 +138,10 @@ final class Paths {
                 heights.put(e.getKey(), (double) walk);
             } else {
                 // Apron: ease from the route surface back to the original ground.
-                int g = t.at(x, z);
+                int g = t.level(x, z);
                 int k = (int) Math.ceil(cell.dist - shoulderHalf);
                 int target = (int) Math.round((walk - 1) + (g - (walk - 1)) * Terrain.blend(k, apron));
-                if (target != g) {
+                if (target != g && !(t.wetAt(x, z) && target <= g)) { // never dig into standing water
                     BlockState top = c.noise(x, z, 4.0) > 0.2 ? Blocks.COARSE_DIRT.defaultBlockState() : Blocks.GRASS_BLOCK.defaultBlockState();
                     t.shape(c, x, z, target, top, Math.max(target, g) + headroom / 2);
                 }

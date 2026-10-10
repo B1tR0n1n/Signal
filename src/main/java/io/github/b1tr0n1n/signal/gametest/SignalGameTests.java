@@ -59,6 +59,17 @@ public final class SignalGameTests {
     private SignalGameTests() {
     }
 
+    /** Highest non-air block y (relative) in a test column, scanning down from the volume's top. */
+    private static int topAt(GameTestHelper helper, int x, int z) {
+        for (int y = 40; y > 0; y--) {
+            if (!helper.getBlockState(new BlockPos(x, y, z)).isAir() && !helper.getBlockState(new BlockPos(x, y, z)).is(Blocks.SPRUCE_LOG)
+                    && !helper.getBlockState(new BlockPos(x, y, z)).is(Blocks.SPRUCE_LEAVES)) {
+                return y;
+            }
+        }
+        return 1;
+    }
+
     private static boolean touches(ServerLevel level, BlockPos p, java.util.function.Predicate<BlockState> joins) {
         for (net.minecraft.core.Direction d : net.minecraft.core.Direction.values()) {
             if (joins.test(level.getBlockState(p.relative(d)))) {
@@ -138,6 +149,48 @@ public final class SignalGameTests {
                 }
             }
         }
+        // Ponds scattered over the site, so routes and pads meet water (none may be left as a hanging wall).
+        for (int px = 8; px < 170; px += 26) {
+            for (int pz = 6; pz < 138; pz += 22) {
+                int m = Integer.MAX_VALUE;
+                for (int x = px; x < px + 6; x++) {
+                    for (int z = pz; z < pz + 6; z++) {
+                        m = Math.min(m, topAt(helper, x, z));
+                    }
+                }
+                if (m < 8) {
+                    continue; // keep the lowest ground dry: the site's depth margin must stay above the test floor
+                }
+                for (int x = px; x < px + 6; x++) {
+                    for (int z = pz; z < pz + 6; z++) {
+                        for (int y = m - 1; y <= m + 14; y++) {
+                            helper.setBlock(new BlockPos(x, y, z), y == m - 1 ? Blocks.WATER : Blocks.AIR);
+                        }
+                    }
+                }
+            }
+        }
+        // A mound with a pond on top, across the road's way in: grading the road through the mound must not
+        // leave the pond hanging as a wall of water.
+        int crest = 0;
+        for (int x = 36; x <= 56; x++) {
+            for (int z = 62; z <= 82; z++) {
+                crest = Math.max(crest, topAt(helper, x, z));
+            }
+        }
+        crest += 4;
+        for (int x = 36; x <= 56; x++) {
+            for (int z = 62; z <= 82; z++) {
+                int d = Math.max(Math.abs(x - 46), Math.abs(z - 72));
+                int base = topAt(helper, x, z);
+                int top = d <= 5 ? crest : base + Math.round((crest - base) * (10 - d) / 5.0f);
+                for (int y = base + 1; y <= top + 14; y++) {
+                    BlockState fill = y > top ? Blocks.AIR.defaultBlockState()
+                            : y == top ? (d <= 3 ? Blocks.WATER : Blocks.GRASS_BLOCK).defaultBlockState() : Blocks.DIRT.defaultBlockState();
+                    helper.setBlock(new BlockPos(x, y, z), fill);
+                }
+            }
+        }
         BlockPos anchor = helper.absolutePos(new BlockPos(0, 8, 72));
         // Forge's FakePlayer: a real ServerPlayer with a no-op network handler. (The vanilla mock player
         // cannot be placed on a Forge-family server: login hooks need a Netty pipeline.)
@@ -191,6 +244,17 @@ public final class SignalGameTests {
             }
         }
         check(chains > 20, "power line cable missing (" + chains + " links)");
+        // No hanging water: every fluid inside the site is held from the sides and from below.
+        for (BlockPos p : BlockPos.betweenClosed(b.minX(), b.minY(), b.minZ(), b.maxX(), b.maxY(), b.maxZ())) {
+            if (!level.getFluidState(p).isEmpty()) {
+                for (net.minecraft.core.Direction d : new net.minecraft.core.Direction[]{net.minecraft.core.Direction.NORTH,
+                        net.minecraft.core.Direction.SOUTH, net.minecraft.core.Direction.EAST, net.minecraft.core.Direction.WEST,
+                        net.minecraft.core.Direction.DOWN}) {
+                    BlockPos n = p.relative(d);
+                    check(!b.isInside(n) || !level.getBlockState(n).isAir(), "water hangs over air at " + p + " (" + d + ")");
+                }
+            }
+        }
         // No floating trunks: a cut through a tree must take the whole tree above it.
         for (BlockPos p : BlockPos.betweenClosed(b.minX(), b.minY(), b.minZ(), b.maxX(), b.maxY(), b.maxZ())) {
             if (level.getBlockState(p).is(Blocks.SPRUCE_LOG)) {
