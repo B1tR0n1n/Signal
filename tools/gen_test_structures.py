@@ -10,8 +10,8 @@ import gzip
 import os
 import struct
 
-DATA_VERSION_1_20_1 = 3465
-OUT = os.path.join(os.path.dirname(__file__), "..", "src", "main", "resources", "data", "signal", "structures")
+DATA_VERSION_1_21_1 = 3955
+OUT = os.path.join(os.path.dirname(__file__), "..", "src", "main", "resources", "data", "signal", "structure")
 
 TAG_END, TAG_INT, TAG_STRING, TAG_LIST, TAG_COMPOUND = 0, 3, 8, 9, 10
 
@@ -39,7 +39,7 @@ def compound_payload(*tags):
 
 def template(size):
     root = compound_payload(
-        t_int("DataVersion", DATA_VERSION_1_20_1),
+        t_int("DataVersion", DATA_VERSION_1_21_1),
         t_list("size", TAG_INT, [struct.pack(">i", v) for v in size]),
         t_list("palette", TAG_COMPOUND, [compound_payload(t_string("Name", "minecraft:air"))]),
         t_list("blocks", TAG_END, []),

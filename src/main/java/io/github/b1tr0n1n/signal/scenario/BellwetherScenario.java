@@ -8,9 +8,9 @@ import io.github.b1tr0n1n.signal.registry.ModBlocks;
 import io.github.b1tr0n1n.signal.registry.ModItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.StringTag;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.server.network.Filterable;
+import net.minecraft.world.item.component.WrittenBookContent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
@@ -386,18 +386,16 @@ public final class BellwetherScenario {
 
     private static ItemStack maintenanceLog() {
         ItemStack book = new ItemStack(Items.WRITTEN_BOOK);
-        CompoundTag tag = book.getOrCreateTag();
-        tag.putString("title", "Maintenance Log");
-        tag.putString("author", "N. Serrat");
-        ListTag pages = new ListTag();
+        List<Filterable<Component>> pages = new ArrayList<>();
         for (String page : new String[]{
                 "BELLWETHER RELAY STN. 4\nMaintenance log\n\nGenerator G1: 6 units\nPump P1: 5\nLocal TX: 1\nRegional relay R4: 3\n\nThe bus carries what G1 gives. No more.",
                 "Day 212\nF1 running hot. Isolated the supply at G1 before it went. Pump's on the gravity bypass for now.\n\nWe have water. We can't tell the depot what we need.\n- N.S.",
                 "F1 REPLACEMENT\n1. Confirm G1 isolated.\n2. Spare fuse from the cabinet by the bench.\n3. Fit F1 at DP-1.\n4. Close the isolator at G1.\n5. Set breakers at DP-1.\n   Check the total first.",
                 "Day 209\nStorm knocked R4's antenna off its bearing. Relay will take power and reach nobody until it's realigned.\n\nDon't waste the units on it.\n- N.S."}) {
-            pages.add(StringTag.valueOf(Component.Serializer.toJson(Component.literal(page))));
+            pages.add(Filterable.passThrough(Component.literal(page)));
         }
-        tag.put("pages", pages);
+        book.set(DataComponents.WRITTEN_BOOK_CONTENT, new WrittenBookContent(
+                Filterable.passThrough("Maintenance Log"), "N. Serrat", 0, pages, true));
         return book;
     }
 
@@ -519,7 +517,7 @@ public final class BellwetherScenario {
                 }
                 float r = rnd.nextFloat();
                 if (r < 0.22F) {
-                    set(x, 0, z, Blocks.GRASS);
+                    set(x, 0, z, Blocks.SHORT_GRASS);
                 } else if (r < 0.30F) {
                     set(x, 0, z, Blocks.FERN);
                 } else if (r < 0.33F && ground.is(Blocks.MOSS_BLOCK)) {

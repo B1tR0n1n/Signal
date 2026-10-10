@@ -5,6 +5,7 @@ import io.github.b1tr0n1n.signal.domain.FuseState;
 import io.github.b1tr0n1n.signal.domain.Service;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
 
 import java.util.EnumSet;
 import java.util.Set;
@@ -17,6 +18,8 @@ import java.util.Set;
 public record PanelSnapshot(BlockPos pos, int revision, boolean fuseInstalled, boolean isolated, int configuredMask,
                             boolean relayAligned, boolean playerHasFuse, String status) {
     private static final int MAX_STATUS = 96;
+    public static final StreamCodec<FriendlyByteBuf, PanelSnapshot> STREAM_CODEC =
+            StreamCodec.of((buf, s) -> s.encode(buf), PanelSnapshot::decode);
 
     public static int mask(Set<Service> services) {
         int m = 0;

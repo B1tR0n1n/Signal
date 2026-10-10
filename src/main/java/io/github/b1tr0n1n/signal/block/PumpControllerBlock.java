@@ -1,5 +1,6 @@
 package io.github.b1tr0n1n.signal.block;
 
+import com.mojang.serialization.MapCodec;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
@@ -10,6 +11,8 @@ import net.minecraft.world.level.block.state.properties.IntegerProperty;
  * and falls when it loses power. Cosmetic presentation of the authoritative running state.
  */
 public class PumpControllerBlock extends SiteMachineBlock {
+    public static final MapCodec<PumpControllerBlock> CODEC = simpleCodec(PumpControllerBlock::new);
+
     public static final IntegerProperty PRESSURE = IntegerProperty.create("pressure", 0, 3);
 
     public PumpControllerBlock(Properties props) {
@@ -21,5 +24,10 @@ public class PumpControllerBlock extends SiteMachineBlock {
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         super.createBlockStateDefinition(builder);
         builder.add(PRESSURE);
+    }
+
+    @Override
+    protected MapCodec<? extends PumpControllerBlock> codec() {
+        return CODEC;
     }
 }

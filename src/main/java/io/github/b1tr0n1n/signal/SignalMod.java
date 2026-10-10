@@ -6,11 +6,9 @@ import io.github.b1tr0n1n.signal.registry.ModBlockEntities;
 import io.github.b1tr0n1n.signal.registry.ModBlocks;
 import io.github.b1tr0n1n.signal.registry.ModCreativeTabs;
 import io.github.b1tr0n1n.signal.registry.ModItems;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.common.NeoForge;
 
 /**
  * SIGNAL entry point. Wires registries, networking and server-side campaign events. Contains no game
@@ -20,17 +18,12 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 public final class SignalMod {
     public static final String MOD_ID = "signal";
 
-    public SignalMod(FMLJavaModLoadingContext context) {
-        IEventBus modBus = context.getModEventBus();
+    public SignalMod(IEventBus modBus) {
         ModBlocks.BLOCKS.register(modBus);
         ModItems.ITEMS.register(modBus);
         ModBlockEntities.BLOCK_ENTITIES.register(modBus);
         ModCreativeTabs.TABS.register(modBus);
-        modBus.addListener(this::commonSetup);
-        MinecraftForge.EVENT_BUS.register(new CampaignEvents());
-    }
-
-    private void commonSetup(FMLCommonSetupEvent event) {
-        event.enqueueWork(SignalNetwork::register);
+        modBus.addListener(SignalNetwork::register);
+        NeoForge.EVENT_BUS.register(new CampaignEvents());
     }
 }

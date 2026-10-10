@@ -1,5 +1,6 @@
 package io.github.b1tr0n1n.signal.block;
 
+import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
@@ -15,6 +16,8 @@ import org.jetbrains.annotations.Nullable;
  * only the campaign projection turns it on, so there is one source of truth for service state.
  */
 public class ServiceLampBlock extends Block implements EntityBlock {
+    public static final MapCodec<ServiceLampBlock> CODEC = simpleCodec(ServiceLampBlock::new);
+
     public static final BooleanProperty LIT = BlockStateProperties.LIT;
 
     public ServiceLampBlock(Properties props) {
@@ -31,5 +34,10 @@ public class ServiceLampBlock extends Block implements EntityBlock {
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new SiteNodeBlockEntity(pos, state);
+    }
+
+    @Override
+    protected MapCodec<? extends ServiceLampBlock> codec() {
+        return CODEC;
     }
 }

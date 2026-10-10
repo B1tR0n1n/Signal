@@ -90,7 +90,7 @@ public class PanelScreen extends Screen {
             y += 21;
         }
         applyButton = addRenderableWidget(Button.builder(Component.translatable("screen.signal.panel.apply"), b ->
-                        SignalNetwork.CHANNEL.sendToServer(new SignalNetwork.ApplyAllocation(snapshot.pos(), PanelSnapshot.mask(proposal), snapshot.revision())))
+                        SignalNetwork.sendToServer(new SignalNetwork.ApplyAllocation(snapshot.pos(), PanelSnapshot.mask(proposal), snapshot.revision())))
                 .bounds(left + 10, top + PANEL_H - 28, 84, 20).build());
         addRenderableWidget(Button.builder(Component.translatable("screen.signal.panel.revert"), b -> {
             proposal.clear();
@@ -98,7 +98,7 @@ public class PanelScreen extends Screen {
             refreshWidgets();
         }).bounds(left + 102, top + PANEL_H - 28, 84, 20).build());
         fuseButton = addRenderableWidget(Button.builder(Component.translatable("screen.signal.panel.install_fuse"), b ->
-                        SignalNetwork.CHANNEL.sendToServer(new SignalNetwork.InstallFuse(snapshot.pos(), snapshot.revision())))
+                        SignalNetwork.sendToServer(new SignalNetwork.InstallFuse(snapshot.pos(), snapshot.revision())))
                 .bounds(left + RIGHT_X, top + PANEL_H - 28, 96, 20).build());
         addRenderableWidget(Button.builder(Component.translatable("screen.signal.panel.close"), b -> onClose())
                 .bounds(left + PANEL_W - 74, top + PANEL_H - 28, 64, 20).build());
@@ -129,9 +129,13 @@ public class PanelScreen extends Screen {
         fuseButton.active = snapshot.isolated() && snapshot.playerHasFuse();
     }
 
+    /**
+     * 1.21: {@link Screen#render} draws the background first and the widgets after it, so the panel body
+     * (frame, applied state, preview, status) is drawn here, between the two.
+     */
     @Override
-    public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
-        renderBackground(g);
+    public void renderBackground(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+        super.renderBackground(g, mouseX, mouseY, partialTick);
         g.fill(left, top, left + PANEL_W, top + PANEL_H, BG);
         g.renderOutline(left, top, PANEL_W, PANEL_H, FRAME);
         g.drawString(font, title, left + 10, top + 8, TEXT, false);
@@ -188,7 +192,6 @@ public class PanelScreen extends Screen {
                 sy += 10;
             }
         }
-        super.render(g, mouseX, mouseY, partialTick);
     }
 
     private List<Component> previewLines(AllocationPreview p, BellwetherBus bus) {

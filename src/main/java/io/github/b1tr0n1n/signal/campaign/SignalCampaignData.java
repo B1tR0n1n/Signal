@@ -9,6 +9,7 @@ import io.github.b1tr0n1n.signal.domain.HistoryEvent;
 import io.github.b1tr0n1n.signal.domain.RadioLog;
 import io.github.b1tr0n1n.signal.domain.Service;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -65,8 +66,11 @@ public final class SignalCampaignData extends SavedData {
     private int pumpPressure;
     private BellwetherSite site = new BellwetherSite();
 
+    private static final SavedData.Factory<SignalCampaignData> FACTORY =
+            new SavedData.Factory<>(SignalCampaignData::new, (tag, registries) -> load(tag), null);
+
     public static SignalCampaignData get(MinecraftServer server) {
-        return server.overworld().getDataStorage().computeIfAbsent(SignalCampaignData::load, SignalCampaignData::new, FILE_ID);
+        return server.overworld().getDataStorage().computeIfAbsent(FACTORY, FILE_ID);
     }
 
     public SignalCampaignData() {
@@ -195,6 +199,11 @@ public final class SignalCampaignData extends SavedData {
     // ----- persistence -----
 
     @Override
+    public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
+        return save(tag);
+    }
+
+    /** Registry-independent encoding (the campaign stores only ids, numbers and strings). */
     public CompoundTag save(CompoundTag tag) {
         tag.putInt("Schema", SCHEMA_VERSION);
         tag.putBoolean("Initialized", initialized);

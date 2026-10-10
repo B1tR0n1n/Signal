@@ -1,5 +1,6 @@
 package io.github.b1tr0n1n.signal.block;
 
+import com.mojang.serialization.MapCodec;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
@@ -7,6 +8,8 @@ import net.minecraft.world.level.block.state.properties.BooleanProperty;
 
 /** Allocation and preview interface. {@code fault} shows the scorched F1 carrier until the fuse is replaced. */
 public class DistributionPanelBlock extends SiteMachineBlock {
+    public static final MapCodec<DistributionPanelBlock> CODEC = simpleCodec(DistributionPanelBlock::new);
+
     public static final BooleanProperty FAULT = BooleanProperty.create("fault");
 
     public DistributionPanelBlock(Properties props) {
@@ -18,5 +21,10 @@ public class DistributionPanelBlock extends SiteMachineBlock {
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         super.createBlockStateDefinition(builder);
         builder.add(FAULT);
+    }
+
+    @Override
+    protected MapCodec<? extends DistributionPanelBlock> codec() {
+        return CODEC;
     }
 }

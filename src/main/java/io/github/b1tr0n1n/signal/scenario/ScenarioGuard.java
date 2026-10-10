@@ -12,7 +12,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.phys.AABB;
-import net.minecraftforge.common.Tags;
+import net.neoforged.neoforge.common.Tags;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -80,7 +80,7 @@ public final class ScenarioGuard {
                 || s.is(BlockTags.TERRACOTTA)
                 || s.is(BlockTags.CAVE_VINES)
                 || s.is(Tags.Blocks.ORES)
-                || s.is(Tags.Blocks.GRAVEL)
+                || s.is(Tags.Blocks.GRAVELS)
                 || s.is(Blocks.CLAY)
                 || s.is(Blocks.MOSS_BLOCK)
                 || s.is(Blocks.MOSS_CARPET)
