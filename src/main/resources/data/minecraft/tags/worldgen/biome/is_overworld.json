@@ -1,0 +1,11 @@
+{
+  "replace": false,
+  "values": [
+    "signal:meridian_forest",
+    "signal:meridian_woodland",
+    "signal:meridian_moor",
+    "signal:meridian_ridge",
+    "signal:meridian_river",
+    "signal:meridian_lake"
+  ]
+}

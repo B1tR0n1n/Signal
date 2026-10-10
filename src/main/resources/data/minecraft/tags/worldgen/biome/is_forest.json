@@ -1,0 +1,7 @@
+{
+  "replace": false,
+  "values": [
+    "signal:meridian_forest",
+    "signal:meridian_woodland"
+  ]
+}

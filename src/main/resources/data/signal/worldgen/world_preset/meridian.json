@@ -1,0 +1,307 @@
+{
+  "dimensions": {
+    "minecraft:overworld": {
+      "type": "minecraft:overworld",
+      "generator": {
+        "type": "minecraft:noise",
+        "settings": "minecraft:overworld",
+        "biome_source": {
+          "type": "minecraft:multi_noise",
+          "biomes": [
+            {
+              "biome": "signal:meridian_lake",
+              "parameters": {
+                "temperature": [
+                  -1.0,
+                  1.0
+                ],
+                "humidity": [
+                  -1.0,
+                  1.0
+                ],
+                "continentalness": [
+                  -1.2,
+                  -0.19
+                ],
+                "erosion": [
+                  -1.0,
+                  1.0
+                ],
+                "weirdness": [
+                  -1.0,
+                  1.0
+                ],
+                "depth": 0.0,
+                "offset": 0.0
+              }
+            },
+            {
+              "biome": "signal:meridian_river",
+              "parameters": {
+                "temperature": [
+                  -1.0,
+                  1.0
+                ],
+                "humidity": [
+                  -1.0,
+                  1.0
+                ],
+                "continentalness": [
+                  -0.19,
+                  1.0
+                ],
+                "erosion": [
+                  -0.2,
+                  1.0
+                ],
+                "weirdness": [
+                  -0.05,
+                  0.05
+                ],
+                "depth": 0.0,
+                "offset": 0.0
+              }
+            },
+            {
+              "biome": "signal:meridian_moor",
+              "parameters": {
+                "temperature": [
+                  -1.0,
+                  1.0
+                ],
+                "humidity": [
+                  -1.0,
+                  -0.15
+                ],
+                "continentalness": [
+                  -0.19,
+                  1.0
+                ],
+                "erosion": [
+                  -0.375,
+                  1.0
+                ],
+                "weirdness": [
+                  -1.0,
+                  -0.05
+                ],
+                "depth": 0.0,
+                "offset": 0.0
+              }
+            },
+            {
+              "biome": "signal:meridian_woodland",
+              "parameters": {
+                "temperature": [
+                  -1.0,
+                  1.0
+                ],
+                "humidity": [
+                  -0.15,
+                  0.12
+                ],
+                "continentalness": [
+                  -0.19,
+                  1.0
+                ],
+                "erosion": [
+                  -0.375,
+                  1.0
+                ],
+                "weirdness": [
+                  -1.0,
+                  -0.05
+                ],
+                "depth": 0.0,
+                "offset": 0.0
+              }
+            },
+            {
+              "biome": "signal:meridian_forest",
+              "parameters": {
+                "temperature": [
+                  -1.0,
+                  1.0
+                ],
+                "humidity": [
+                  0.12,
+                  1.0
+                ],
+                "continentalness": [
+                  -0.19,
+                  1.0
+                ],
+                "erosion": [
+                  -0.375,
+                  1.0
+                ],
+                "weirdness": [
+                  -1.0,
+                  -0.05
+                ],
+                "depth": 0.0,
+                "offset": 0.0
+              }
+            },
+            {
+              "biome": "signal:meridian_ridge",
+              "parameters": {
+                "temperature": [
+                  -1.0,
+                  1.0
+                ],
+                "humidity": [
+                  -1.0,
+                  1.0
+                ],
+                "continentalness": [
+                  0.3,
+                  1.0
+                ],
+                "erosion": [
+                  -1.0,
+                  -0.375
+                ],
+                "weirdness": [
+                  -1.0,
+                  -0.05
+                ],
+                "depth": 0.0,
+                "offset": 0.0
+              }
+            },
+            {
+              "biome": "signal:meridian_moor",
+              "parameters": {
+                "temperature": [
+                  -1.0,
+                  1.0
+                ],
+                "humidity": [
+                  -1.0,
+                  -0.15
+                ],
+                "continentalness": [
+                  -0.19,
+                  1.0
+                ],
+                "erosion": [
+                  -0.375,
+                  1.0
+                ],
+                "weirdness": [
+                  0.05,
+                  1.0
+                ],
+                "depth": 0.0,
+                "offset": 0.0
+              }
+            },
+            {
+              "biome": "signal:meridian_woodland",
+              "parameters": {
+                "temperature": [
+                  -1.0,
+                  1.0
+                ],
+                "humidity": [
+                  -0.15,
+                  0.12
+                ],
+                "continentalness": [
+                  -0.19,
+                  1.0
+                ],
+                "erosion": [
+                  -0.375,
+                  1.0
+                ],
+                "weirdness": [
+                  0.05,
+                  1.0
+                ],
+                "depth": 0.0,
+                "offset": 0.0
+              }
+            },
+            {
+              "biome": "signal:meridian_forest",
+              "parameters": {
+                "temperature": [
+                  -1.0,
+                  1.0
+                ],
+                "humidity": [
+                  0.12,
+                  1.0
+                ],
+                "continentalness": [
+                  -0.19,
+                  1.0
+                ],
+                "erosion": [
+                  -0.375,
+                  1.0
+                ],
+                "weirdness": [
+                  0.05,
+                  1.0
+                ],
+                "depth": 0.0,
+                "offset": 0.0
+              }
+            },
+            {
+              "biome": "signal:meridian_ridge",
+              "parameters": {
+                "temperature": [
+                  -1.0,
+                  1.0
+                ],
+                "humidity": [
+                  -1.0,
+                  1.0
+                ],
+                "continentalness": [
+                  0.3,
+                  1.0
+                ],
+                "erosion": [
+                  -1.0,
+                  -0.375
+                ],
+                "weirdness": [
+                  0.05,
+                  1.0
+                ],
+                "depth": 0.0,
+                "offset": 0.0
+              }
+            }
+          ]
+        }
+      }
+    },
+    "minecraft:the_nether": {
+      "type": "minecraft:the_nether",
+      "generator": {
+        "type": "minecraft:noise",
+        "settings": "minecraft:nether",
+        "biome_source": {
+          "type": "minecraft:multi_noise",
+          "preset": "minecraft:nether"
+        }
+      }
+    },
+    "minecraft:the_end": {
+      "type": "minecraft:the_end",
+      "generator": {
+        "type": "minecraft:noise",
+        "settings": "minecraft:end",
+        "biome_source": {
+          "type": "minecraft:the_end"
+        }
+      }
+    }
+  }
+}

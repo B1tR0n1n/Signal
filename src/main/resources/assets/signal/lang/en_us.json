@@ -77,5 +77,12 @@
   "command.signal.scenario.reset_warning": "Reset rebuilds everything inside %s to %s and starts a new campaign timeline. Nothing outside is touched. Run /signal scenario reset bellwether confirm to proceed.",
   "command.signal.scenario.reset_done": "Bellwether site rebuilt; new campaign timeline started.",
   "screen.signal.units.one": "%s unit",
-  "screen.signal.units.many": "%s units"
+  "screen.signal.units.many": "%s units",
+  "generator.signal.meridian": "SIGNAL: Meridian Corridor",
+  "biome.signal.meridian_forest": "Meridian Forest",
+  "biome.signal.meridian_woodland": "Logged Woodland",
+  "biome.signal.meridian_moor": "Wet Moor",
+  "biome.signal.meridian_ridge": "Stony Ridge",
+  "biome.signal.meridian_river": "Corridor River",
+  "biome.signal.meridian_lake": "Reservoir"
 }
