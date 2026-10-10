@@ -24,8 +24,8 @@ public final class AtmosphereFog {
     public static final TagKey<Biome> MERIDIAN =
             TagKey.create(Registries.BIOME, ResourceLocation.fromNamespaceAndPath(SignalMod.MOD_ID, "meridian"));
 
-    private static final float CLEAR_FAR = 128.0F;
-    private static final float RAIN_FAR = 72.0F;
+    private static final float CLEAR_FAR = 176.0F;
+    private static final float RAIN_FAR = 104.0F;
     private static final float NEAR_FRACTION = 0.08F;
     /** Fraction of the remaining distance covered per frame (~2 s to settle at 60 fps). */
     private static final float EASE = 0.03F;

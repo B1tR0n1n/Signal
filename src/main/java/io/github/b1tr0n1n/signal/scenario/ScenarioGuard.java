@@ -26,28 +26,41 @@ public final class ScenarioGuard {
     private ScenarioGuard() {
     }
 
-    public record Report(boolean ok, int occupied, @Nullable BlockPos first, @Nullable String reasonKey) {
+    public record Report(boolean ok, int occupied, @Nullable BlockPos first, @Nullable String reasonKey, String firstWhat) {
     }
 
     public static Report check(ServerLevel level, BoundingBox box) {
+        return check(level, box, null);
+    }
+
+    /**
+     * @param ground surveyed natural ground; when given, blocks more than 3 below the column's ground count as
+     *               world-generated unless they carry a block entity (a player's underground base still has
+     *               chests, furnaces or beds), so caves, lava lakes and geodes never block construction
+     */
+    public static Report check(ServerLevel level, BoundingBox box, @Nullable Terrain ground) {
         if (box.minY() < level.getMinBuildHeight() || box.maxY() >= level.getMaxBuildHeight()) {
-            return new Report(false, 0, null, "command.signal.scenario.out_of_height");
+            return new Report(false, 0, null, "command.signal.scenario.out_of_height", "");
         }
         if (!level.hasChunksAt(box.minX(), box.minY(), box.minZ(), box.maxX(), box.maxY(), box.maxZ())) {
-            return new Report(false, 0, null, "command.signal.scenario.not_loaded");
+            return new Report(false, 0, null, "command.signal.scenario.not_loaded", "");
         }
         int occupied = 0;
         BlockPos first = null;
+        String what = "";
         BlockPos.MutableBlockPos p = new BlockPos.MutableBlockPos();
         for (int x = box.minX(); x <= box.maxX(); x++) {
             for (int z = box.minZ(); z <= box.maxZ(); z++) {
+                int deep = ground != null && ground.contains(x, z) ? ground.at(x, z) - 3 : Integer.MIN_VALUE;
                 for (int y = box.minY(); y <= box.maxY(); y++) {
                     p.set(x, y, z);
                     BlockState s = level.getBlockState(p);
-                    if (!isNatural(s) || level.getBlockEntity(p) != null) {
+                    boolean hasEntity = level.getBlockEntity(p) != null;
+                    if (hasEntity || y >= deep && !isNatural(s)) {
                         occupied++;
                         if (first == null) {
                             first = p.immutable();
+                            what = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(s.getBlock()).toString();
                         }
                     }
                 }
@@ -60,9 +73,10 @@ public final class ScenarioGuard {
             occupied += foreign.size();
             if (first == null) {
                 first = foreign.get(0).blockPosition();
+                what = foreign.get(0).getType().toShortString();
             }
         }
-        return new Report(occupied == 0, occupied, first, occupied == 0 ? null : "command.signal.scenario.occupied");
+        return new Report(occupied == 0, occupied, first, occupied == 0 ? null : "command.signal.scenario.occupied", what);
     }
 
     public static boolean isNatural(BlockState s) {
@@ -93,6 +107,14 @@ public final class ScenarioGuard {
                 || s.is(Blocks.BROWN_MUSHROOM_BLOCK)
                 || s.is(Blocks.RED_MUSHROOM_BLOCK)
                 || s.is(Blocks.MUSHROOM_STEM)
-                || s.is(Blocks.SWEET_BERRY_BUSH);
+                || s.is(Blocks.SWEET_BERRY_BUSH)
+                || s.is(Blocks.MOSSY_COBBLESTONE) // forest_rock boulders
+                || s.is(Blocks.BROWN_MUSHROOM) || s.is(Blocks.RED_MUSHROOM)
+                || s.is(Blocks.SANDSTONE)
+                || s.is(Blocks.CALCITE) || s.is(Blocks.SMOOTH_BASALT) || s.is(Blocks.AMETHYST_BLOCK)
+                || s.is(Blocks.BUDDING_AMETHYST) || s.is(Blocks.AMETHYST_CLUSTER)
+                || s.is(Blocks.POINTED_DRIPSTONE) || s.is(Blocks.DRIPSTONE_BLOCK)
+                || s.is(Blocks.MAGMA_BLOCK) || s.is(Blocks.OBSIDIAN) // lake floors, lava meeting water
+                || s.is(Blocks.KELP) || s.is(Blocks.KELP_PLANT);
     }
 }

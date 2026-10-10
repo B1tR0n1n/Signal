@@ -67,15 +67,15 @@
   "screen.signal.panel.status.fuse_missing": "You have no replacement F1.",
   "command.signal.scenario.exists": "A SIGNAL campaign already exists in this world (anchor %s). Use /signal scenario status, or /signal scenario reset bellwether confirm.",
   "command.signal.scenario.none": "No SIGNAL campaign in this world.",
-  "command.signal.scenario.occupied": "Refused: %s occupied block(s) or object(s) in the site area (first at %s). Area %s to %s must be natural terrain only. Use a fresh test world or another anchor.",
+  "command.signal.scenario.occupied": "Refused: %s occupied block(s) or object(s) in the site area (first at %s). Area %s to %s must be natural terrain only. Try another spot or a fresh world.",
   "command.signal.scenario.not_loaded": "Refused: the site area %3$s to %4$s is not fully loaded. Stand closer to the anchor and try again.",
   "command.signal.scenario.out_of_height": "Refused: the site area %3$s to %4$s would extend outside the world's build height.",
-  "command.signal.scenario.created": "Bellwether relay site created at %s (bounds %s to %s).",
+  "command.signal.scenario.created": "Bellwether relay site built into the terrain at %s (bounds %s to %s).",
   "command.signal.scenario.rules": "Scenario rules applied: mob spawning disabled (server-wide game rule). Revert with /gamerule doMobSpawning true.",
   "command.signal.scenario.rules_weather": "Scenario rules applied: mob spawning disabled (server-wide game rule; revert with /gamerule doMobSpawning true). Rain set for this dimension, then the normal weather cycle resumes.",
-  "command.signal.scenario.player_ready": "You are now in Adventure mode at the maintenance road with a handheld radio; your spawn point is set here. Walk east to the service yard.",
-  "command.signal.scenario.reset_warning": "Reset rebuilds everything inside %s to %s and starts a new campaign timeline. Nothing outside is touched. Run /signal scenario reset bellwether confirm to proceed.",
-  "command.signal.scenario.reset_done": "Bellwether site rebuilt; new campaign timeline started.",
+  "command.signal.scenario.player_ready": "You are now in Adventure mode at the start of the maintenance road with a handheld radio; your spawn point is set here. Follow the road east, toward the tower.",
+  "command.signal.scenario.reset_warning": "Reset rebuilds the service facility inside %s to %s (equipment, spare fuses, log) and starts a new campaign timeline. The road, compound and tower are left as they are. Run /signal scenario reset bellwether confirm to proceed.",
+  "command.signal.scenario.reset_done": "Bellwether facility rebuilt; new campaign timeline started.",
   "screen.signal.units.one": "%s unit",
   "screen.signal.units.many": "%s units",
   "generator.signal.meridian": "SIGNAL: Meridian Corridor",
@@ -84,5 +84,6 @@
   "biome.signal.meridian_moor": "Wet Moor",
   "biome.signal.meridian_ridge": "Stony Ridge",
   "biome.signal.meridian_river": "Corridor River",
-  "biome.signal.meridian_lake": "Reservoir"
+  "biome.signal.meridian_lake": "Reservoir",
+  "command.signal.scenario.surveying": "Surveying the ground and building Bellwether (this takes a few seconds)..."
 }

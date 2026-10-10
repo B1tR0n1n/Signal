@@ -17,6 +17,13 @@ Regenerate with `python3 tools/gen_textures.py` (requires Pillow).
 are original project files. Block models parent Minecraft's built-in `block/orientable`, `block/cube_all`
 and `item/generated` model templates by reference only; no Mojang assets are copied into the JAR.
 
+## Worldgen data
+
+`data/signal/worldgen/**`, `data/signal/tags/**` and `data/minecraft/tags/worldgen/**` are original project
+data written by `tools/gen_worldgen.py`. Biomes reference Minecraft's own placed features and sounds by id
+(e.g. `minecraft:trees_old_growth_spruce_taiga`); nothing from Minecraft is copied into the JAR. The vanilla
+data generator was run locally only to read the reference format.
+
 ## Test structures
 
 `data/signal/structures/empty_5.nbt` and `bellwether_site.nbt` are empty GameTest volumes written by

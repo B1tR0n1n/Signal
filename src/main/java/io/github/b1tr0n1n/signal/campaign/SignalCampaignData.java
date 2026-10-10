@@ -44,7 +44,7 @@ import java.util.UUID;
 public final class SignalCampaignData extends SavedData {
     private static final Logger LOGGER = LogUtils.getLogger();
     public static final String FILE_ID = "signal_campaign";
-    public static final int SCHEMA_VERSION = 1;
+    public static final int SCHEMA_VERSION = 2;
 
     private boolean initialized;
     /** Non-null when the stored data could not be understood; every action is refused with this text. */
@@ -59,6 +59,8 @@ public final class SignalCampaignData extends SavedData {
     private BlockPos start = BlockPos.ZERO;
     private float startYaw;
     private BlockPos facilityEntrance = BlockPos.ZERO;
+    /** Origin of the service facility's local frame (for rebuilding the facility on reset). */
+    private BlockPos frame = BlockPos.ZERO;
     @Nullable
     private UUID participant;
     private final Map<BlockPos, String> bindings = new LinkedHashMap<>();
@@ -80,8 +82,8 @@ public final class SignalCampaignData extends SavedData {
 
     /** Start a new campaign timeline. Any previous timeline's history is discarded, never merged. */
     public void initialize(String scenarioId, ResourceKey<Level> dimension, BlockPos anchor, BoundingBox bounds,
-                           BlockPos start, float startYaw, BlockPos facilityEntrance, @Nullable UUID participant,
-                           Map<BlockPos, String> bindings) {
+                           BlockPos start, float startYaw, BlockPos facilityEntrance, BlockPos frame,
+                           @Nullable UUID participant, Map<BlockPos, String> bindings) {
         this.initialized = true;
         this.loadError = null;
         this.campaignId = UUID.randomUUID();
@@ -92,6 +94,7 @@ public final class SignalCampaignData extends SavedData {
         this.start = start.immutable();
         this.startYaw = startYaw;
         this.facilityEntrance = facilityEntrance.immutable();
+        this.frame = frame.immutable();
         this.participant = participant;
         this.bindings.clear();
         bindings.forEach((p, n) -> this.bindings.put(p.immutable(), n));
@@ -163,6 +166,10 @@ public final class SignalCampaignData extends SavedData {
         return facilityEntrance;
     }
 
+    public BlockPos frame() {
+        return frame;
+    }
+
     @Nullable
     public UUID participant() {
         return participant;
@@ -218,6 +225,7 @@ public final class SignalCampaignData extends SavedData {
         tag.putLong("Start", start.asLong());
         tag.putFloat("StartYaw", startYaw);
         tag.putLong("Entrance", facilityEntrance.asLong());
+        tag.putLong("Frame", frame.asLong());
         if (participant != null) {
             tag.putUUID("Participant", participant);
         }
@@ -283,6 +291,7 @@ public final class SignalCampaignData extends SavedData {
             d.start = BlockPos.of(tag.getLong("Start"));
             d.startYaw = tag.getFloat("StartYaw");
             d.facilityEntrance = BlockPos.of(tag.getLong("Entrance"));
+            d.frame = BlockPos.of(tag.getLong("Frame"));
             d.participant = tag.hasUUID("Participant") ? tag.getUUID("Participant") : null;
             for (Tag t : tag.getList("Bindings", Tag.TAG_COMPOUND)) {
                 CompoundTag e = (CompoundTag) t;

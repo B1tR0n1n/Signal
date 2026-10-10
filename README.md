@@ -1,34 +1,36 @@
 # SIGNAL
 
-An original Minecraft Java Edition adventure built as a Forge mod. You are Elias Vale, a field systems
+An original Minecraft Java Edition adventure built as a NeoForge mod. You are Elias Vale, a field systems
 engineer restoring power and communication between isolated communities in the Meridian Corridor.
 
-**Current state: milestones M0 and M1.** One walkable relay site (Bellwether Relay Station 4) with a
-real repair-and-allocation loop. See [`docs/IMPLEMENTATION_STATUS.md`](docs/IMPLEMENTATION_STATUS.md)
-for exactly what works and what is planned.
+**Current state: M0 + M1 on NeoForge 1.21.1, with the Meridian Corridor world type.** One relay site
+(Bellwether Relay Station 4) built into the terrain, with a real repair-and-allocation loop. See
+[`docs/IMPLEMENTATION_STATUS.md`](docs/IMPLEMENTATION_STATUS.md) for exactly what works and what is planned.
 
-![The Bellwether service room after repair](docs/screenshots/09_service_room_live.png)
+![Power line, old track and relay tower R4 in the rain](docs/screenshots/02_power_line_rail_tower.png)
 
 | Requirement | Version |
 | --- | --- |
-| Minecraft Java Edition | **1.20.1** |
-| Forge | **47.4.10** (any 47.4.10 – 47.x works per `mods.toml`) |
-| Java | **17** (64-bit JDK to build; the launcher's bundled Java 17 to play) |
-| Other mods, shaders | none |
+| Minecraft Java Edition | **1.21.1** |
+| NeoForge | **21.1.256** or newer 21.1.x |
+| Java | **21** (64-bit JDK to build; the launcher's bundled Java 21 to play) |
+| Other mods | none required. For the best graphics (Iris shaders, Distant Horizons) see [`docs/GRAPHICS.md`](docs/GRAPHICS.md) |
 
 ## Build (Linux)
 
 From the project root:
 
 ```sh
-java -version              # must report 17 for Gradle's toolchain; any JDK can launch Gradle
+java -version              # a JDK 21 must be installed (Gradle's toolchain uses Java 21)
 ./gradlew build            # compiles, runs the unit tests, produces the mod JAR
 ./gradlew runGameTestServer  # optional: boots a test server and runs the integration GameTests
 ```
 
-The mod JAR is **`build/libs/signal-0.1.0.jar`**.
+The mod JAR is **`build/libs/signal-0.2.0.jar`**.
 
 The first build downloads and decompiles Minecraft (several minutes, about 1–2 GB in `~/.gradle`).
+Every command from the project root; `./gradlew runGameTestServer` builds the whole site on synthetic
+terrain and plays the repair loop.
 If Maven Central answers `429 Too Many Requests`, wait a minute and rerun; it is transient rate limiting.
 
 Windows: the same tasks via `gradlew.bat build` etc. This was **not tested on Windows**.
@@ -46,20 +48,24 @@ Windows: the same tasks via `gradlew.bat build` etc. This was **not tested on Wi
 Use a **separate** Minecraft instance so your normal worlds are untouched. Nothing in this project
 installs itself anywhere.
 
-1. In the official launcher (or any launcher), install **Forge 1.20.1 – 47.4.10** using the Forge installer
-   from <https://files.minecraftforge.net/net/minecraftforge/forge/index_1.20.1.html>, into a new game directory.
-2. Copy `build/libs/signal-0.1.0.jar` into that instance's `mods/` folder.
-3. Launch and create a **new world** with **Allow Cheats: ON** (the command needs operator rights);
-   **World Type: Superflat** is recommended so the site area is empty.
-4. In that world run:
+1. In CurseForge: Minecraft → Create Custom Profile → **1.21.1**, loader **NeoForge**, version **21.1.256**
+   or newer. (Any launcher works: install NeoForge 1.21.1 into a fresh game directory.)
+2. Copy `build/libs/signal-0.2.0.jar` into that profile's `mods/` folder. In CurseForge the profile
+   folder is shown by the profile's "Open Folder"; on Linux it is typically
+   `~/Documents/curseforge/minecraft/Instances/<profile>/mods/`.
+3. Launch and create a **new world**: **Allow Cheats: ON**, and **World Type: SIGNAL: Meridian Corridor**
+   (More World Options / World tab). Minecraft will warn that the world uses *experimental settings*; that
+   appears for any custom world type, choose "I know what I'm doing".
+4. Stand anywhere on open ground and run:
 
    ```
    /signal scenario create bellwether
    ```
 
-   The site is built at your feet (48 x 28 blocks east/south of you, 3 below to 30 above). Creation is
-   refused if the area contains anything that isn't natural terrain (blocks, chests, signs, item frames...).
-   You will be moved to the start of the maintenance road in Adventure mode, with a handheld radio.
+   The command surveys the land and builds the site into it, east of you (about 176 x 144 blocks): a
+   road through the forest, an old rail line, the fenced compound, the relay tower on the high ground and
+   the houses of Bellwether. It refuses if the area contains player-made things (builds, chests, signs,
+   item frames...). You are moved to the start of the road in Adventure mode, with a handheld radio.
 
 The command announces everything it changes: your game mode and spawn point, `doMobSpawning` set to
 false (a server-wide game rule; revert with `/gamerule doMobSpawning true`), and rain in the Overworld.
@@ -67,8 +73,8 @@ false (a server-wide game rule; revert with `/gamerule doMobSpawning true`), and
 
 ## Playing the first site
 
-Walk east along the road to the service yard and into the service room. Nia, Bellwether's technician,
-talks to you over the radio. Then:
+Follow the road east through the trees, under the power line and over the old rail crossing, to the
+compound gate. Nia, Bellwether's technician, talks to you over the radio. Then:
 
 1. **Read the maintenance log** on the lectern by the door (optional; it explains the plant).
 2. **Take a spare fuse** from the cabinet (barrel) marked *SPARE FUSES*.
@@ -82,12 +88,14 @@ talks to you over the radio. Then:
    machinery sounds start, and Nia confirms on the radio when the local transmitter is back.
 7. Right-click the **handheld radio** (use it in the air) to replay the transcript.
 
-The regional relay will take power but reach no one: its antenna was knocked off its bearing. Fixing that
-is the next milestone.
+The regional relay will take power but reach no one: its antenna was knocked off its bearing. The tower
+north of the compound has a caged ladder to its top deck, where the slipped antenna mount waits for the
+next milestone.
 
-Operator commands: `/signal scenario status` prints the campaign state; `/signal scenario reset bellwether`
-explains what a reset does, and `/signal scenario reset bellwether confirm` rebuilds the site inside its
-own bounds and starts a fresh timeline (your inventory is not touched).
+Operator commands: `/signal scenario status` prints the campaign state (including where the facility and
+tower are); `/signal scenario reset bellwether` explains what a reset does, and
+`/signal scenario reset bellwether confirm` rebuilds the service facility and starts a fresh timeline
+(road, compound and tower stay; your inventory is not touched).
 
 ## Project layout
 
@@ -95,18 +103,19 @@ own bounds and starts a fresh timeline (your inventory is not touched).
 src/main/java/io/github/b1tr0n1n/signal/
   domain/     pure Java rules: bus, fuse, isolator, allocation preview, radio log, history (unit-tested)
   campaign/   SavedData persistence, server-side interaction validation, world projection, radio presentation, tick
-  scenario/   site builder, occupancy guard, create/reset service
+  scenario/   terrain survey, path grading, site layout, prefabs (tower, houses...), occupancy guard
   network/    SimpleImpl channel: intentions client->server, snapshots server->client
   client/     panel screen (client-only, reached through DistExecutor)
   block/ item/ registry/ command/ gametest/
 src/test/java/   JUnit domain tests
-tools/           reproducible generators for textures and empty GameTest structures
+tools/           reproducible generators: textures, worldgen (biomes/world type), GameTest structures
 docs/            status, decisions, compatibility pins, asset provenance, design summary, handoff
 ```
 
 ## Documents
 
 - [Implementation status](docs/IMPLEMENTATION_STATUS.md) – what works, how it was verified, what is next
+- [Graphics](docs/GRAPHICS.md) – Iris shaders, Distant Horizons, settings for the Meridian Corridor
 - [Design summary](docs/DESIGN_SUMMARY.md) – and the full [handoff brief](docs/HANDOFF.md)
 - [Decision log](docs/DECISIONS.md)
 - [Compatibility pins](docs/COMPATIBILITY.md)

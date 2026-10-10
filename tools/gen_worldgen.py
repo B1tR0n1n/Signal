@@ -254,7 +254,5 @@ write("minecraft/tags/worldgen/world_preset/normal.json", {"replace": False, "va
 ALL = [f"{NS}:meridian_{b}" for b in ("forest", "woodland", "moor", "ridge", "river", "lake")]
 write(f"{NS}/tags/worldgen/biome/meridian.json", {"replace": False, "values": ALL})
 write("minecraft/tags/worldgen/biome/is_overworld.json", {"replace": False, "values": ALL})
-write("minecraft/tags/worldgen/biome/is_river.json", {"replace": False, "values": [f"{NS}:meridian_river"]})
-write("minecraft/tags/worldgen/biome/is_forest.json", {"replace": False,
-                                                       "values": [f"{NS}:meridian_forest", f"{NS}:meridian_woodland"]})
+# Deliberately NOT added to #is_forest / #is_river: those tags enable mineshafts (has_structure/mineshaft).
 print("worldgen written to", os.path.normpath(ROOT))

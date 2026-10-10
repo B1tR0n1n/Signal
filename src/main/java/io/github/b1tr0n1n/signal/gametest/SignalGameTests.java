@@ -21,6 +21,7 @@ import io.github.b1tr0n1n.signal.registry.ModItems;
 import io.github.b1tr0n1n.signal.scenario.BellwetherScenario;
 import io.github.b1tr0n1n.signal.scenario.ScenarioGuard;
 import io.github.b1tr0n1n.signal.scenario.ScenarioService;
+import io.github.b1tr0n1n.signal.scenario.ServiceFacility;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestAssertException;
@@ -101,31 +102,60 @@ public final class SignalGameTests {
      * exactly one fuse, supply restored, valid allocation, rejected over-capacity and stale applies,
      * world indicators, pump gauge and header tank, one radio acknowledgement, and a save/load round trip.
      */
-    @GameTest(template = "bellwether_site", timeoutTicks = 600)
+    @GameTest(template = "bellwether_site", timeoutTicks = 1200)
     public static void bellwetherRepairLoop(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         SignalCampaignData data = SignalCampaignData.get(level.getServer());
         if (data.isInitialized()) {
             data.abandonForGameTest();
         }
-        BlockPos anchor = helper.absolutePos(new BlockPos(0, 1 + BellwetherScenario.DEPTH, 0));
+        // Synthetic terrain: rolling ground at rel y 7 with a hill north-east where the tower ridge should be.
+        for (int x = 0; x < 176; x++) {
+            for (int z = 0; z < 144; z++) {
+                double hill = Math.max(0, 12 - 0.9 * Math.hypot(x - 156, z - 26));
+                int top = 7 + (int) Math.round(hill + 1.5 * Math.sin(x / 9.0) * Math.cos(z / 11.0));
+                for (int y = 1; y <= top; y++) {
+                    helper.setBlock(new BlockPos(x, y, z), y == top ? Blocks.GRASS_BLOCK : y > top - 3 ? Blocks.DIRT : Blocks.STONE);
+                }
+            }
+        }
+        BlockPos anchor = helper.absolutePos(new BlockPos(0, 8, 72));
         // Forge's FakePlayer: a real ServerPlayer with a no-op network handler. (The vanilla mock player
-        // cannot be placed on a Forge 1.20.1 server: Forge's login hooks need a Netty pipeline.)
+        // cannot be placed on a Forge-family server: login hooks need a Netty pipeline.)
         ServerPlayer player = FakePlayerFactory.get(level, new GameProfile(UUID.fromString("5167a1e1-0000-4000-8000-000000000001"), "signal_test"));
 
         ScenarioService.CreateResult created = ScenarioService.create(level, anchor, player.getUUID());
-        check(created.status() == ScenarioService.Status.CREATED, "scenario not created: " + created.status()
-                + (created.guard() != null ? " occupied=" + created.guard().occupied() + " first=" + created.guard().first() : ""));
+        check(created.status() == ScenarioService.Status.CREATED, "scenario not created: " + created.status() + " " + created.problemKey()
+                + (created.guard() != null ? " occupied=" + created.guard().occupied() + " first=" + created.guard().first() : "")
+                + " bounds=" + created.bounds());
         check(ScenarioService.create(level, anchor, player.getUUID()).status() == ScenarioService.Status.ALREADY_EXISTS,
                 "second create must refuse");
         ScenarioService.begin(level, data);
+        check(helper.absolutePos(new BlockPos(0, 0, 0)).getY() < data.bounds().minY(), "bounds must stay above the test floor");
+        for (BlockPos p : data.bindings().keySet()) {
+            check(data.bounds().isInside(p), "binding outside bounds: " + p);
+        }
 
         BlockPos gen = find(data, BellwetherSite.NODE_GENERATOR, GeneratorBlock.class, level);
         BlockPos panel = find(data, BellwetherSite.NODE_PANEL, DistributionPanelBlock.class, level);
         BlockPos pump = find(data, BellwetherSite.NODE_PUMP, PumpControllerBlock.class, level);
         BlockPos relay = find(data, BellwetherSite.NODE_RELAY, RelayControllerBlock.class, level);
-        BlockPos cabinet = anchor.offset(23, 0, 8);
+        BlockPos cabinet = data.frame().offset(ServiceFacility.CABINET);
+        BlockPos tank = data.bindings().entrySet().stream().filter(e -> e.getValue().equals(SiteProjector.NODE_PUMP_TANK))
+                .map(Map.Entry::getKey).findFirst().orElseThrow(() -> new GameTestAssertException("no header tank"));
         BellwetherBus bus = data.site().bus();
+
+        // The tower: beacon bound to the relay, and a climbable ladder on a solid riser through both platforms.
+        BlockPos beacon = data.bindings().entrySet().stream()
+                .filter(e -> e.getValue().equals(BellwetherSite.NODE_RELAY) && level.getBlockState(e.getKey()).getBlock() instanceof ServiceLampBlock)
+                .map(Map.Entry::getKey).max(java.util.Comparator.comparingInt(BlockPos::getY))
+                .orElseThrow(() -> new GameTestAssertException("no tower beacon"));
+        BlockPos towerBase = beacon.below(38);
+        check(towerBase.getY() > data.frame().getY(), "tower should stand on the ridge above the compound");
+        for (int y = 0; y <= 28; y++) {
+            check(level.getBlockState(towerBase.offset(0, y, 1)).is(Blocks.LADDER), "ladder missing at +" + y);
+            check(level.getBlockState(towerBase.offset(0, y, 0)).isSolid(), "ladder riser not solid at +" + y);
+        }
 
         // Fresh scenario: faulted, isolated, dark.
         check(bus.fuse() == FuseState.DAMAGED && bus.isolated(), "fresh scenario must be faulted and isolated");
@@ -147,8 +177,8 @@ public final class SignalGameTests {
         player.setGameMode(net.minecraft.world.level.GameType.ADVENTURE);
         player.moveTo(panel.getX() + 0.5, panel.getY() - 1, panel.getZ() + 2.5, 180.0F, 0.0F);
 
-        // A machine placed outside the site is not bound and does nothing.
-        BlockPos stray = helper.absolutePos(new BlockPos(1, 2, 26));
+        // A machine placed outside the bound equipment does nothing.
+        BlockPos stray = helper.absolutePos(new BlockPos(1, 60, 1));
         level.setBlockAndUpdate(stray, ModBlocks.GENERATOR.get().defaultBlockState());
         int before = bus.revision();
         SiteInteractions.onUse(level, player, stray, level.getBlockState(stray));
@@ -211,8 +241,8 @@ public final class SignalGameTests {
                 .thenWaitUntil(() -> {
                     check(data.pumpPressure() == 3, "pressure " + data.pumpPressure());
                     check(level.getBlockState(pump).getValue(PumpControllerBlock.PRESSURE) == 3, "gauge not at 3");
-                    BlockState tank = level.getBlockState(anchor.offset(38, 0, 10));
-                    check(tank.is(Blocks.WATER_CAULDRON) && tank.getValue(LayeredCauldronBlock.LEVEL) == 3, "header tank not full: " + tank);
+                    BlockState tankState = level.getBlockState(tank);
+                    check(tankState.is(Blocks.WATER_CAULDRON) && tankState.getValue(LayeredCauldronBlock.LEVEL) == 3, "header tank not full: " + tankState);
                 })
                 // Saved state round-trips: repair, allocation, messages and history survive.
                 .thenExecute(() -> {
@@ -291,7 +321,7 @@ public final class SignalGameTests {
         level.setBlockAndUpdate(foreign, Blocks.STONE.defaultBlockState());
 
         SignalCampaignData d = new SignalCampaignData();
-        d.initialize(BellwetherScenario.ID, Level.OVERWORLD, lamp, BoundingBox.fromCorners(lamp, foreign), lamp, 0F, lamp, null,
+        d.initialize(BellwetherScenario.ID, Level.OVERWORLD, lamp, BoundingBox.fromCorners(lamp, foreign), lamp, 0F, lamp, lamp, null,
                 Map.of(lamp, BellwetherSite.NODE_GENERATOR, foreign, BellwetherSite.NODE_PUMP, far, BellwetherSite.NODE_RELAY));
         d.site().installFuse(true, d.site().bus().revision());
         d.site().closeIsolator();

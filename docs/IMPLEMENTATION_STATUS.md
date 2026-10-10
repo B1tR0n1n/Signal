@@ -1,79 +1,80 @@
 # Implementation status
 
-Last updated 2026-10-09. Claims are separated by how they were verified.
+Last updated 2026-10-10. Claims are separated by how they were verified.
 
-## What happens in-game now (M0 + M1)
+## Platform
 
-- `/signal scenario create bellwether` (operator) builds the Bellwether relay site at the caller's feet
-  after an occupancy check, moves the participant to the road start in Adventure mode with a handheld radio,
-  sets their spawn there, disables mob spawning and starts rain, and announces each of those changes.
-- The site: forest maintenance road with a drainage channel, a service sign, an abandoned maintenance
-  truck, gravel yard with lantern posts, one service room, an exterior pump stand with a header tank, and
-  a 27-block lattice relay tower as the landmark, inside spruce forest.
-- The service room: generator G1, distribution panel DP-1, pump controller P1 (pressure gauge), regional
-  relay controller R4, local transmitter desk, service lamps, spare-fuse cabinet with two fuses, work bench,
-  Nia's bedroll and heater, maintenance log on a lectern, chain cable tray, hanging lanterns.
-- The repair loop: read state → take a fuse → set breakers at the panel (preview explains totals and
-  shortfalls) → fit F1 (only while isolated; consumes exactly one) → close G1's isolator (refused onto a
-  damaged fuse) → services run. Over-capacity and stale applies are refused.
-- Observable results: block textures change (generator switch, panel fuse carrier, pump needle, relay
-  carrier), service lamps light (including outside and atop the tower for the relay), the header tank fills
-  in three steps, machine sounds are scheduled, chat confirms, and Nia's acknowledgement arrives once.
-- Radio: three authored lines (opening, arrival, local service restored) as subtitled chat with a click cue;
-  undelivered lines wait for the participant's next login; the radio item replays the transcript read-only.
-- Persistence: campaign state in world SavedData (schema 1). Repair, allocation, messages, presentation
-  state, history and bindings survive save/quit and full restart. Unknown schemas are refused, never
-  rewritten.
-- `/signal scenario status`, and `/signal scenario reset bellwether confirm` (two-step) for testing.
+NeoForge 1.21.1 (21.1.256), Java 21, moved from Forge 1.20.1 at the owner's request for Iris shader
+support (decision #22). The milestone-one gameplay was ported unchanged and re-verified.
 
-## Verification record
+## What happens in-game now
+
+- **World type "SIGNAL: Meridian Corridor"** on the Create World screen: Minecraft terrain with six
+  original biomes (wet old-growth forest, logged woodland, open moor, stony ridge, river, reservoir), an
+  overcast grey-green sky, haze, peat-dark water, olive foliage, drifting ash, dead snags, stumps, mud and
+  scree; no flowers, farm animals, villages or mineshafts. Fog closes in inside these biomes and more in rain.
+- **`/signal scenario create bellwether`** surveys the ground and builds the Bellwether site *into* the
+  terrain east of the operator (about 176 x 144 blocks):
+  - a winding maintenance road graded to the land (whole-block heights, slab ramps at steps, puddles,
+    mud shoulders, blended verges), a power line of wooden poles with sagging chain cable, a burnt-out car;
+  - an abandoned rail line on its own graded bed with ascending rails, a level crossing, and a derelict
+    boxcar;
+  - the fenced compound on a levelled pad blended into the slope: chain-link on concrete posts with gaps,
+    lit gate posts, checkpoint booth, the weathered service building (tar roof, rust parapet, vines),
+    pump stand and header tank, container, collapsed shed, truck, fire barrel with smoke, lamp posts;
+  - relay tower R4 on the high ground: lattice with X-bracing, two platforms, a caged ladder on a solid
+    riser through both hatches to a railed deck, the canted antenna and a beacon bound to the relay;
+  - Bellwether: three lived-in houses with lit windows and chimney smoke, reached by a lane off the road.
+- The milestone-one repair loop is unchanged: fuse from the cabinet, panel preview and apply within the
+  6-unit generator, fit F1 while isolated (uses exactly one), close G1's isolator, lamps/gauge/tank respond,
+  Nia's acknowledgement once, radio transcript replay, persistence across restarts.
+- Operator: `/signal scenario status` (now also reports facility and tower positions),
+  `/signal scenario reset bellwether confirm` (rebuilds the facility, new timeline).
+
+## Verification record (2026-10-10, NeoForge build)
 
 | Check | How | Result |
 | --- | --- | --- |
-| Build | `./gradlew build` (JDK 17.0.20, Linux) | Pass; JAR `build/libs/signal-0.1.0.jar` (147 KB) |
-| Domain unit tests | JUnit, 21 tests: 6-unit allocation, pump+relay rejection, misaligned relay unreachable, repair once, live-supply refusal, isolator refusal, stale revision, one-shot acknowledgement, transcript replay adds no event, failed actions not recorded, history restore | 21/21 pass |
-| Integration GameTests | `./gradlew runGameTestServer`, 4 tests on the real generated site with Forge `FakePlayer`: full repair loop through the real server handlers (fuse consumed exactly once across duplicate and stale submits, refused isolator, over-capacity and stale applies, lamps/gauge/tank, acknowledgement once, SavedData round trip, transcript replay adds no event, unbound machine does nothing); occupancy guard; unknown schema refused and never written back; projection never loads chunks or overwrites foreign blocks | 4/4 pass |
-| Dedicated-server class loading | GameTest server (userdev) **and** an official Forge 47.4.10 production server with the reobfuscated JAR in `mods/`; scenario created from the server console, status printed, second create refused | Pass, no client-class errors |
-| Graphical playtest | Real dev client under Xvfb with Mesa llvmpipe (software OpenGL 4.5), driven by `xdotool`. Ran the command from chat, walked the road with held keys, arrival line fired, opened the cabinet in Adventure mode, used the panel with the mouse and with Tab/Enter only, fitted the fuse, closed the isolator, watched lamps/gauge/tank change, saved and quit, restarted the client, confirmed state and that no messages replayed on login, replayed the transcript. Screenshots in `docs/screenshots/`. | Pass |
-| Textures/models | All custom blocks and items render with their own textures in the client (no missing-texture checkerboard seen) | Pass |
+| Build | `./gradlew build` (OpenJDK 21, Linux) | Pass; JAR `build/libs/signal-0.2.0.jar` |
+| Domain unit tests | JUnit, 21 tests (allocation, repair, isolator, stale revision, radio once, history) | 21/21 pass |
+| Integration GameTests | `./gradlew runGameTestServer`: the full site built by the real code on synthetic hilly terrain, then the full repair loop through the real server handlers; every binding inside the bounds; tower above the compound; ladder present on a solid riser at every height to the deck; plus guard, schema refusal and projection safety | 4/4 pass |
+| Worldgen | Production NeoForge 21.1.256 server with the JAR, `level-type=signal:meridian`: all six biomes located, no worldgen errors, no mineshafts | Pass |
+| Graphical playtest | Real dev client, software OpenGL (Mesa llvmpipe) under Xvfb, driven by xdotool, in a server-generated Meridian world: created the site from chat, viewed road, rail, compound and tower, and the view from the deck in rain and at dusk, climbed the ladder with held keys from the ground through both hatches to stand on the deck (y 106.0) | Pass; screenshots in `docs/screenshots/` |
 
-Two panel layout defects found in the playtest were fixed and re-verified in the client: preview text
-overlapping the buttons, and the "1 units" label overflowing its button. Fitting the fuse no longer discards
-an unapplied breaker proposal.
+Problems found in the playtest and fixed: rail line built as a flat 25-block embankment wall (now follows
+the land), vertical cut walls beside routes (now blended aprons), slab "patio" road surfaces (now slabs
+only as ramp steps), noisy confetti ground (now noise patches), bright toy-like palette (now tuff/andesite,
+tar roof, rust), tower placed below the compound (now takes the highest ground north of it), shoreline
+sand (now mud/gravel), mineshafts under the site (biome tags removed), natural lake-floor magma blocking
+construction (guard now ignores non-block-entity blocks below ground).
 
 ## Not verified
 
-- **Sound.** The container has no audio device (OpenAL failed to open), so no sound was heard. Sound events
-  are vanilla and the code paths ran, but volume, rhythm and audibility are unchecked.
-- **GPU rendering, performance and frame rate.** Only software rendering was used. No profiling was done.
-- **Windows.** Nothing was run on Windows.
-- **Real player in multiplayer** and **player death / dimension change** during the scenario.
-- **Unloading the site chunks in a live client** (covered only by the projection GameTest and by the
-  design: the campaign holds the state and re-projects when chunks are loaded).
-- **Non-superflat terrain**: the builder flattens natural terrain inside its bounds; the edge appearance on
-  hills was not looked at.
+- **Shaders and Distant Horizons**: no GPU in the build container. `docs/GRAPHICS.md` lists the stack;
+  you are the judge of how it looks.
+- **Sound** (no audio device), **GPU performance**, **Windows**, **multiplayer**.
+- The site on many different seeds: it was built and viewed on **one** seed (91024), plus synthetic hilly
+  terrain in tests. Very steep or watery anchors can still produce long ramps or deep cuts.
+- **Bellwether's houses were not seen in the client**: the camera positions tried landed inside a hillside.
+  They are built by the same code path the GameTest exercises, but their look is unchecked.
+- The repair loop was played by hand on the Forge build; on NeoForge it is verified by the GameTest that
+  drives the real handlers, not by hand.
 
 ## Known limitations
 
-- The relay can be powered but never reaches anyone: antenna alignment has no control yet (M2).
-- One participant per campaign; another player gets "isn't connected to anything here". A scenario created
-  from the server console has no participant and accepts any player.
-- `doMobSpawning=false` is a server-wide game rule; the scenario is meant for a dedicated test world.
-- Sign and book text are English literals; UI, radio and messages are translatable.
-- Nia is a voice on the radio only; there is no actor in the world yet.
-- Reset rebuilds the site and starts a new timeline but does not touch player inventories.
+- The relay can be powered but reaches no one: antenna alignment has no control yet (M2). The deck sign
+  marks where it will be.
+- One participant per campaign. Reset rebuilds only the facility (sculpted terrain cannot be re-surveyed).
+- `doMobSpawning=false` is server-wide; use a dedicated world.
+- The create-world screen shows the vanilla "experimental settings" warning for the SIGNAL world type.
+- Sign and book text are English literals.
 
-## Planned, not implemented
+## Planned
 
 | Milestone | Content |
 | --- | --- |
-| M2 | Radio channels (Bellwether maintenance, regional exchange, legacy archive), tuning UI, transcript screen, priority queue; antenna alignment control with assist; route terminal (local open vs authenticated regional) with shown trade-offs; consequences with persistence; diagnostic reader; data-driven message definitions with a validated loader. |
-| M3 | Narrative schedule (morning/afternoon/evening/night) advanced only by confirmed actions; Rowan's receiver promise; renegotiation call; field battery window (3 units, one segment, previewed fallback); Nia training and verification; delegated task. |
-| M4 | Home room, Rowan's receiver activity with on-time / renegotiated / missed scenes; three full branches. |
-| M5 | Evidence-grounded transmission with provenance. |
-| M6 | Expanded atmosphere: settlement, more sites, original ambient audio. |
-
-## Next dependency
-
-M2 starts with antenna alignment (relay `relayAligned` already exists in the domain and the relay
-controller already has a `linked` visual state) and the route terminal, then the radio channel model.
+| M2 | Antenna alignment at the tower deck mount, route terminal (local open vs authenticated regional), radio channels/tuning/transcript screen, archive frequency, data-driven messages. |
+| M3 | Narrative schedule, Rowan's receiver promise, renegotiation, field battery window, Nia training and delegation. |
+| M4 | Home and Rowan's receiver scene; three full branches. Bellwether's houses are where this will live. |
+| M5 | Evidence-grounded transmission. |
+| M6 | Original ambient audio, more sites, original textures for vanilla building blocks (resource pack). |

@@ -9,6 +9,7 @@ import io.github.b1tr0n1n.signal.registry.ModItems;
 import io.github.b1tr0n1n.signal.scenario.BellwetherScenario;
 import io.github.b1tr0n1n.signal.scenario.ScenarioGuard;
 import io.github.b1tr0n1n.signal.scenario.ScenarioService;
+import io.github.b1tr0n1n.signal.scenario.ServiceFacility;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -54,8 +55,8 @@ public final class SignalCommands {
         ServerLevel level = src.getLevel();
         SignalCampaignData data = SignalCampaignData.get(src.getServer());
         BlockPos anchor = anchorArg != null ? anchorArg : BlockPos.containing(src.getPosition());
-        BoundingBox box = BellwetherScenario.bounds(anchor);
         ServerPlayer player = src.getEntity() instanceof ServerPlayer p ? p : null;
+        src.sendSuccess(() -> Component.translatable("command.signal.scenario.surveying").withStyle(ChatFormatting.GRAY), false);
         ScenarioService.CreateResult r = ScenarioService.create(level, anchor, player == null ? null : player.getUUID());
         switch (r.status()) {
             case UNREADABLE_DATA -> {
@@ -67,14 +68,18 @@ public final class SignalCommands {
                 return 0;
             }
             case BLOCKED -> {
+                BoundingBox box = r.bounds();
                 ScenarioGuard.Report g = r.guard();
-                src.sendFailure(Component.translatable(g.reasonKey(), g.occupied(), g.first() == null ? "-" : fmt(g.first()),
-                        fmt(new BlockPos(box.minX(), box.minY(), box.minZ())), fmt(new BlockPos(box.maxX(), box.maxY(), box.maxZ()))));
+                src.sendFailure(Component.translatable(r.problemKey(), g == null ? 0 : g.occupied(),
+                        g == null || g.first() == null ? "-" : fmt(g.first()) + " (" + g.firstWhat() + ")",
+                        box == null ? "-" : fmt(new BlockPos(box.minX(), box.minY(), box.minZ())),
+                        box == null ? "-" : fmt(new BlockPos(box.maxX(), box.maxY(), box.maxZ()))));
                 return 0;
             }
             default -> {
             }
         }
+        BoundingBox box = data.bounds();
         applyScenarioRules(src, level);
         if (player != null) {
             preparePlayer(player, level, data);
@@ -110,9 +115,19 @@ public final class SignalCommands {
                 + " running=" + (running.isEmpty() ? "none" : running) + "\n"
                 + " relayAligned=" + bus.relayAligned() + " relayReachable=" + bus.relayReachable() + " revision=" + bus.revision() + "\n"
                 + " radio=" + data.site().radio().transcript() + "\n"
-                + " historyEvents=" + data.site().history().events().size() + " pumpPressure=" + data.pumpPressure();
+                + " historyEvents=" + data.site().history().events().size() + " pumpPressure=" + data.pumpPressure() + "\n"
+                + " facility=" + fmt(data.frame().offset(27, 0, 15)) + " tower=" + towerBase(data);
         src.sendSuccess(() -> Component.literal(text), false);
         return 1;
+    }
+
+    /** Tower base (walking level at its centre), from the highest relay-bound lamp: the beacon. */
+    private static String towerBase(SignalCampaignData data) {
+        return data.bindings().entrySet().stream()
+                .filter(e -> e.getValue().equals(BellwetherSite.NODE_RELAY))
+                .map(java.util.Map.Entry::getKey)
+                .max(java.util.Comparator.comparingInt(BlockPos::getY))
+                .map(p -> fmt(p.below(38))).orElse("-");
     }
 
     private static int resetWarning(CommandSourceStack src) {
@@ -121,7 +136,7 @@ public final class SignalCommands {
             src.sendFailure(Component.translatable("command.signal.scenario.none"));
             return 0;
         }
-        BoundingBox b = data.bounds();
+        BoundingBox b = ServiceFacility.box(data.frame());
         src.sendSuccess(() -> Component.translatable("command.signal.scenario.reset_warning",
                 fmt(new BlockPos(b.minX(), b.minY(), b.minZ())), fmt(new BlockPos(b.maxX(), b.maxY(), b.maxZ())))
                 .withStyle(ChatFormatting.YELLOW), false);
@@ -140,7 +155,7 @@ public final class SignalCommands {
             src.sendFailure(Component.literal("Campaign dimension " + data.dimension().location() + " is not available."));
             return 0;
         }
-        BoundingBox box = data.bounds();
+        BoundingBox box = ServiceFacility.box(data.frame());
         if (!level.hasChunksAt(box.minX(), box.minY(), box.minZ(), box.maxX(), box.maxY(), box.maxZ())) {
             src.sendFailure(Component.translatable("command.signal.scenario.not_loaded", 0, "-",
                     fmt(new BlockPos(box.minX(), box.minY(), box.minZ())), fmt(new BlockPos(box.maxX(), box.maxY(), box.maxZ()))));

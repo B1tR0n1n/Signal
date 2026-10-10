@@ -58,5 +58,5 @@ def write(file, size):
 
 if __name__ == "__main__":
     write("empty_5.nbt", (5, 5, 5))
-    # Full Bellwether site: 48 x (3 below + 31 above + 1) x 28.
-    write("bellwether_site.nbt", (48, 35, 28))
+    # Full Bellwether site on synthetic terrain: 176 x 72 x 144.
+    write("bellwether_site.nbt", (176, 72, 144))
