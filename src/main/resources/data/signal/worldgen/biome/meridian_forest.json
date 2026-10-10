@@ -2,6 +2,7 @@
   "has_precipitation": true,
   "temperature": 0.55,
   "downfall": 0.9,
+  "creature_spawn_probability": 0.25,
   "effects": {
     "sky_color": 8160650,
     "fog_color": 8358527,
@@ -40,22 +41,22 @@
     "axolotls": [],
     "creature": [
       {
-        "type": "minecraft:wolf",
-        "weight": 8,
+        "type": "minecraft:rabbit",
+        "weight": 12,
         "minCount": 2,
         "maxCount": 4
       },
       {
         "type": "minecraft:fox",
-        "weight": 8,
+        "weight": 10,
         "minCount": 2,
-        "maxCount": 3
+        "maxCount": 4
       },
       {
-        "type": "minecraft:rabbit",
-        "weight": 4,
-        "minCount": 2,
-        "maxCount": 3
+        "type": "minecraft:wolf",
+        "weight": 8,
+        "minCount": 3,
+        "maxCount": 5
       }
     ],
     "misc": [],
@@ -174,7 +175,7 @@
     [
       "minecraft:glow_lichen",
       "minecraft:patch_large_fern",
-      "minecraft:trees_old_growth_spruce_taiga",
+      "signal:trees_forest",
       "signal:dead_snag_rare",
       "minecraft:patch_grass_taiga",
       "minecraft:patch_dead_bush",

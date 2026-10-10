@@ -21,8 +21,14 @@ and `item/generated` model templates by reference only; no Mojang assets are cop
 
 `data/signal/worldgen/**`, `data/signal/tags/**` and `data/minecraft/tags/worldgen/**` are original project
 data written by `tools/gen_worldgen.py`. Biomes reference Minecraft's own placed features and sounds by id
-(e.g. `minecraft:trees_old_growth_spruce_taiga`); nothing from Minecraft is copied into the JAR. The vanilla
-data generator was run locally only to read the reference format.
+(e.g. `minecraft:trees_old_growth_spruce_taiga`). The vanilla data generator was run locally only to read the
+reference format.
+
+One file is **derived from Minecraft's own data**: `data/signal/worldgen/noise_settings/meridian.json`. Minecraft
+accepts only complete noise settings, so the generator reads the overworld's noise settings from the local
+game jar and substitutes three density-function references (`depth`, `factor`, `sloped_cheese`) with
+SIGNAL's (`data/signal/worldgen/density_function/meridian/*`, original, which wrap vanilla's functions by
+reference). It is terrain configuration data, not art, sound or a model (decision #32).
 
 ## Test structures
 

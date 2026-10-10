@@ -19,7 +19,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
@@ -172,8 +171,8 @@ public final class SignalCommands {
     }
 
     private static void applyScenarioRules(CommandSourceStack src, ServerLevel level) {
-        // Documented scope: mob spawning is a server-wide rule; weather is per dimension (Overworld only).
-        level.getGameRules().getRule(GameRules.RULE_DOMOBSPAWNING).set(false, src.getServer());
+        // Weather is per dimension (Overworld only). Hostile mobs are kept out of the site by
+        // CampaignEvents#onSpawnPosition; the world's own spawning (wildlife included) is left alone.
         boolean weather = level.dimension() == Level.OVERWORLD;
         if (weather) {
             level.setWeatherParameters(0, 6000, true, false);

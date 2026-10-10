@@ -67,8 +67,8 @@ installs itself anywhere.
    the houses of Bellwether. It refuses if the area contains player-made things (builds, chests, signs,
    item frames...). You are moved to the start of the road in Adventure mode, with a handheld radio.
 
-The command announces everything it changes: your game mode and spawn point, `doMobSpawning` set to
-false (a server-wide game rule; revert with `/gamerule doMobSpawning true`), and rain in the Overworld.
+The command announces everything it changes: your game mode and spawn point, hostile mobs kept from
+spawning naturally inside the site (no game rule is changed; wildlife still spawns), and rain in the Overworld.
 **Installing the mod alone changes nothing in any world.**
 
 ## Playing the first site

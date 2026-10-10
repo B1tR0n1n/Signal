@@ -10,7 +10,10 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.entity.MobSpawnType;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.neoforge.event.entity.living.MobSpawnEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -26,6 +29,25 @@ public final class CampaignEvents {
     private static final int PRESSURE_STEP_TICKS = 30;
     private static final int PROJECT_TICKS = 20;
     private static final double ARRIVAL_DISTANCE_SQR = 9.0 * 9.0;
+
+    /**
+     * Natural hostile spawns are refused inside the site (with an 8-block margin) while a campaign is
+     * active. Wildlife and everything outside the site spawn as usual; no game rule is changed.
+     */
+    @SubscribeEvent
+    public void onSpawnPosition(MobSpawnEvent.PositionCheck event) {
+        MobSpawnType type = event.getSpawnType();
+        if (type != MobSpawnType.NATURAL && type != MobSpawnType.CHUNK_GENERATION
+                || event.getEntity().getType().getCategory() != MobCategory.MONSTER) {
+            return;
+        }
+        ServerLevel level = event.getLevel().getLevel();
+        SignalCampaignData data = SignalCampaignData.get(level.getServer());
+        if (data.isActive() && level.dimension().equals(data.dimension())
+                && data.bounds().inflatedBy(8).isInside(BlockPos.containing(event.getX(), event.getY(), event.getZ()))) {
+            event.setResult(MobSpawnEvent.PositionCheck.Result.FAIL);
+        }
+    }
 
     @SubscribeEvent
     public void onRegisterCommands(RegisterCommandsEvent event) {

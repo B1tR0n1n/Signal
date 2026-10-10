@@ -196,6 +196,7 @@ public final class SignalGameTests {
         // cannot be placed on a Forge-family server: login hooks need a Netty pipeline.)
         ServerPlayer player = FakePlayerFactory.get(level, new GameProfile(UUID.fromString("5167a1e1-0000-4000-8000-000000000001"), "signal_test"));
 
+        boolean spawningBefore = level.getGameRules().getBoolean(net.minecraft.world.level.GameRules.RULE_DOMOBSPAWNING);
         ScenarioService.CreateResult created = ScenarioService.create(level, anchor, player.getUUID());
         check(created.status() == ScenarioService.Status.CREATED, "scenario not created: " + created.status() + " " + created.problemKey()
                 + (created.guard() != null ? " occupied=" + created.guard().occupied() + " first=" + created.guard().first() : "")
@@ -204,6 +205,24 @@ public final class SignalGameTests {
                 "second create must refuse");
         ScenarioService.begin(level, data);
         check(helper.absolutePos(new BlockPos(0, 0, 0)).getY() < data.bounds().minY(), "bounds must stay above the test floor");
+        // The site keeps hostiles out without touching the world's spawning: wildlife may still spawn in it.
+        check(level.getGameRules().getBoolean(net.minecraft.world.level.GameRules.RULE_DOMOBSPAWNING) == spawningBefore,
+                "creating the site must not change the world's mob spawning rule");
+        BlockPos yard = data.frame().above();
+        net.minecraft.world.entity.monster.Zombie zombie = new net.minecraft.world.entity.monster.Zombie(level);
+        zombie.moveTo(yard.getX() + 0.5, yard.getY(), yard.getZ() + 0.5);
+        net.neoforged.neoforge.event.entity.living.MobSpawnEvent.PositionCheck hostile = new net.neoforged.neoforge.event.entity.living.MobSpawnEvent.PositionCheck(
+                zombie, level, net.minecraft.world.entity.MobSpawnType.NATURAL, null);
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(hostile);
+        check(hostile.getResult() == net.neoforged.neoforge.event.entity.living.MobSpawnEvent.PositionCheck.Result.FAIL,
+                "a natural zombie spawn inside the site must be refused");
+        net.minecraft.world.entity.animal.Rabbit rabbit = new net.minecraft.world.entity.animal.Rabbit(net.minecraft.world.entity.EntityType.RABBIT, level);
+        rabbit.moveTo(yard.getX() + 0.5, yard.getY(), yard.getZ() + 0.5);
+        net.neoforged.neoforge.event.entity.living.MobSpawnEvent.PositionCheck wild = new net.neoforged.neoforge.event.entity.living.MobSpawnEvent.PositionCheck(
+                rabbit, level, net.minecraft.world.entity.MobSpawnType.NATURAL, null);
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(wild);
+        check(wild.getResult() != net.neoforged.neoforge.event.entity.living.MobSpawnEvent.PositionCheck.Result.FAIL,
+                "wildlife must not be refused inside the site");
         for (BlockPos p : data.bindings().keySet()) {
             check(data.bounds().isInside(p), "binding outside bounds: " + p);
         }

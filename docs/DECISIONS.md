@@ -83,3 +83,20 @@ Reversible choices made during implementation. Newest last.
     (a causeway, not a trench), aprons never dig below standing water, and a final pass banks every air cell
     that touches water or lava from the side or above with mud. Known-shape writes do not wake fluids, so
     without this a cut beside a lake left the water hanging as a sheer wall (seen in play).
+32. **Meridian terrain is walkable rolling country.** Owner playtest: too hilly, too much climbing, too many
+    trees to get around. Meridian now has its own noise settings: vanilla's terrain height (`offset`) is kept
+    at 60 % of its relief about the sea-level offset (rivers, lakes and shores stay at the water line), peak
+    jaggedness at 35 %, and `factor` is raised 30 % for smoother slopes. Measured on seed 91024 over 1024
+    chunks of land (trunks filtered): height spread stdev 14.4 → 8.7, 95th-percentile ground y 111 → 93,
+    steps needing a jump 4.1 % → 2.2 %, walls of 4+ blocks 0.7 % → 0.4 %, land fraction unchanged.
+    The noise settings file is derived from Minecraft's own overworld settings (see ASSET_PROVENANCE).
+    Tunables: `RELIEF`, `JAGGED`, `SMOOTH` in `tools/gen_worldgen.py`.
+33. **Groves and clearings, and wildlife.** Spruce trees grow in groves (a broad noise field picks 2–7 per
+    chunk in forest, 1–4 in woodland, vanilla is 10): canopy over land 54 % → 25 %. Biomes place more animals
+    at generation (`creature_spawn_probability` 0.25, vanilla 0.1) with larger packs: rabbits, foxes and
+    wolves everywhere, frogs on the moor and rivers, goats on the ridges. Still no farm animals. Mutant
+    creatures are planned as SIGNAL's own entities (original models and textures), not imported.
+34. **No server-wide spawning change** (supersedes the `doMobSpawning=false` part of #17). Creating the site
+    used to switch mob spawning off for the whole world, which also stopped wildlife from spawning after
+    generation. Now natural hostile spawns are refused only inside the site bounds (plus 8 blocks) while a
+    campaign is active (`CampaignEvents#onSpawnPosition`); game rules are untouched.

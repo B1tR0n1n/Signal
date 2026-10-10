@@ -13,6 +13,8 @@ support (decision #22). The milestone-one gameplay was ported unchanged and re-v
   original biomes (wet old-growth forest, logged woodland, open moor, stony ridge, river, reservoir), an
   overcast grey-green sky, haze, peat-dark water, olive foliage, drifting ash, dead snags, stumps, mud and
   scree; no flowers, farm animals, villages or mineshafts. Fog closes in inside these biomes and more in rain.
+  The land is gentler than vanilla (relief, peaks and cliffs reduced; decision #32), spruce grows in groves
+  with clearings between them, and the woods hold rabbits, foxes, wolf packs, frogs and ridge goats (#33).
 - **`/signal scenario create bellwether`** surveys the ground and builds the Bellwether site *into* the
   terrain east of the operator (about 176 x 144 blocks):
   - a winding maintenance road graded to the land (whole-block heights, slab ramps at steps, puddles,
@@ -65,7 +67,6 @@ construction (guard now ignores non-block-entity blocks below ground).
 - The relay can be powered but reaches no one: antenna alignment has no control yet (M2). The deck sign
   marks where it will be.
 - One participant per campaign. Reset rebuilds only the facility (sculpted terrain cannot be re-surveyed).
-- `doMobSpawning=false` is server-wide; use a dedicated world.
 - The create-world screen shows the vanilla "experimental settings" warning for the SIGNAL world type.
 - Sign and book text are English literals.
 

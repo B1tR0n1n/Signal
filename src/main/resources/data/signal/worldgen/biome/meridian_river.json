@@ -2,6 +2,7 @@
   "has_precipitation": true,
   "temperature": 0.6,
   "downfall": 0.9,
+  "creature_spawn_probability": 0.25,
   "effects": {
     "sky_color": 8160650,
     "fog_color": 9410702,
@@ -40,22 +41,28 @@
     "axolotls": [],
     "creature": [
       {
-        "type": "minecraft:wolf",
-        "weight": 8,
+        "type": "minecraft:rabbit",
+        "weight": 12,
         "minCount": 2,
         "maxCount": 4
       },
       {
         "type": "minecraft:fox",
-        "weight": 8,
+        "weight": 10,
         "minCount": 2,
-        "maxCount": 3
+        "maxCount": 4
       },
       {
-        "type": "minecraft:rabbit",
-        "weight": 4,
+        "type": "minecraft:wolf",
+        "weight": 8,
+        "minCount": 3,
+        "maxCount": 5
+      },
+      {
+        "type": "minecraft:frog",
+        "weight": 10,
         "minCount": 2,
-        "maxCount": 3
+        "maxCount": 5
       }
     ],
     "misc": [],

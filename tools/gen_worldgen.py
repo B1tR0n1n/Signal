@@ -66,12 +66,15 @@ MONSTERS = [
     {"type": "minecraft:slime", "weight": 100, "minCount": 4, "maxCount": 4},
     {"type": "minecraft:enderman", "weight": 10, "minCount": 1, "maxCount": 4},
 ]
-# Wildlife only: no farm animals in the corridor.
+# Wildlife only: no farm animals in the corridor. Packs of wolves, foxes and rabbits in the woods; goats on
+# the ridges; frogs in the wet ground.
 WILD = [
-    {"type": "minecraft:wolf", "weight": 8, "minCount": 2, "maxCount": 4},
-    {"type": "minecraft:fox", "weight": 8, "minCount": 2, "maxCount": 3},
-    {"type": "minecraft:rabbit", "weight": 4, "minCount": 2, "maxCount": 3},
+    {"type": "minecraft:rabbit", "weight": 12, "minCount": 2, "maxCount": 4},
+    {"type": "minecraft:fox", "weight": 10, "minCount": 2, "maxCount": 4},
+    {"type": "minecraft:wolf", "weight": 8, "minCount": 3, "maxCount": 5},
 ]
+WET = WILD + [{"type": "minecraft:frog", "weight": 10, "minCount": 2, "maxCount": 5}]
+HIGH = WILD + [{"type": "minecraft:goat", "weight": 10, "minCount": 2, "maxCount": 4}]
 
 
 def spawners(creature=WILD, water=()):
@@ -98,9 +101,15 @@ def effects(sky, fog, water, water_fog, grass, foliage, ash):
     return e
 
 
-def biome(name, temperature, downfall, eff, local, vegetal, creature=WILD, water=()):
+BIOME_STEPS = {}
+
+
+def biome(name, temperature, downfall, eff, local, vegetal, creature=WILD, water=(), animals=0.25):
+    BIOME_STEPS[name] = steps(local, vegetal)
     write(f"{NS}/worldgen/biome/{name}.json", {
         "has_precipitation": True, "temperature": temperature, "downfall": downfall,
+        # Animals placed when a chunk is first generated (Minecraft's default is 0.1): the woods feel lived in.
+        "creature_spawn_probability": animals,
         "effects": eff, "spawners": spawners(creature, water), "spawn_costs": {},
         "carvers": CARVERS, "features": steps(local, vegetal),
     })
@@ -168,6 +177,20 @@ for shore, cnt in (("shore_mud", 6), ("shore_gravel", 4)):
         {"type": "minecraft:biome"}]})
 SHORE = [f"{NS}:shore_mud", f"{NS}:shore_gravel"]
 
+# Trees: Minecraft's own spruce trees, but in groves with clearings between them (count follows a broad
+# noise field) and at about half vanilla density, so the woods can be walked through.
+def trees(name, feature, sparse, dense):
+    write(f"{NS}/worldgen/placed_feature/{name}.json", {"feature": feature, "placement": [
+        {"type": "minecraft:noise_threshold_count", "noise_level": 0.0, "below_noise": sparse, "above_noise": dense},
+        {"type": "minecraft:in_square"},
+        {"type": "minecraft:surface_water_depth_filter", "max_water_depth": 0},
+        {"type": "minecraft:heightmap", "heightmap": "OCEAN_FLOOR"},
+        {"type": "minecraft:biome"}]})
+
+
+trees("trees_forest", "minecraft:trees_old_growth_spruce_taiga", 2, 7)
+trees("trees_woodland", "minecraft:trees_taiga", 1, 4)
+
 surface_placed("dead_snag_rare", f"{NS}:dead_snag", 6, [ON_GROUND])
 surface_placed("dead_snag_common", f"{NS}:dead_snag", 2, [ON_GROUND])
 surface_placed("stumps", f"{NS}:stump", 2, [ON_GROUND])
@@ -184,13 +207,13 @@ SKY, FOG = "#7c858a", "#8f988e"
 biome("meridian_forest", 0.55, 0.9,
       effects(SKY, "#7f8a7f", "#3b4a3c", "#16201a", "#5e6b3f", "#465532", 0.0035),
       local=["minecraft:forest_rock", f"{NS}:podzol_patch", f"{NS}:mud_patch", *SHORE],
-      vegetal=["minecraft:glow_lichen", "minecraft:patch_large_fern", "minecraft:trees_old_growth_spruce_taiga",
+      vegetal=["minecraft:glow_lichen", "minecraft:patch_large_fern", f"{NS}:trees_forest",
                f"{NS}:dead_snag_rare", "minecraft:patch_grass_taiga", "minecraft:patch_dead_bush",
                "minecraft:brown_mushroom_old_growth", "minecraft:red_mushroom_old_growth", "minecraft:patch_berry_common"])
 biome("meridian_woodland", 0.6, 0.85,
       effects(SKY, FOG, "#3d4b3d", "#18221b", "#6a7347", "#525d37", 0.003),
       local=["minecraft:forest_rock", f"{NS}:coarse_patch", f"{NS}:mud_patch", *SHORE],
-      vegetal=["minecraft:glow_lichen", "minecraft:patch_large_fern", "minecraft:trees_taiga", f"{NS}:stumps",
+      vegetal=["minecraft:glow_lichen", "minecraft:patch_large_fern", f"{NS}:trees_woodland", f"{NS}:stumps",
                f"{NS}:dead_snag_common", "minecraft:patch_grass_taiga_2", "minecraft:patch_dead_bush",
                "minecraft:brown_mushroom_taiga"])
 biome("meridian_moor", 0.65, 0.95,
@@ -198,23 +221,25 @@ biome("meridian_moor", 0.65, 0.95,
       local=[f"{NS}:mud_patch_wet", f"{NS}:coarse_patch", *SHORE],
       vegetal=["minecraft:glow_lichen", "minecraft:patch_tall_grass_2", "minecraft:patch_large_fern",
                "minecraft:trees_windswept_hills", f"{NS}:dead_snag_common", "minecraft:patch_grass_taiga",
-               "minecraft:patch_dead_bush", "minecraft:patch_waterlily"])
+               "minecraft:patch_dead_bush", "minecraft:patch_waterlily"],
+      creature=WET)
 biome("meridian_ridge", 0.45, 0.7,
       effects("#78818a", "#8a9290", "#3e4a42", "#172019", "#6b7148", "#556039", 0.005),
       local=["minecraft:forest_rock", f"{NS}:gravel_spill", f"{NS}:stone_scree", *SHORE],
       vegetal=["minecraft:glow_lichen", "minecraft:trees_windswept_hills", f"{NS}:dead_snag_common",
-               "minecraft:patch_grass_badlands", "minecraft:patch_dead_bush"])
+               "minecraft:patch_grass_badlands", "minecraft:patch_dead_bush"],
+      creature=HIGH, animals=0.15)
 biome("meridian_river", 0.6, 0.9,
       effects(SKY, FOG, "#3a463a", "#141c16", "#666e45", "#4f5a36", 0.0025),
       local=[f"{NS}:mud_patch_wet", *SHORE],
       vegetal=["minecraft:glow_lichen", "minecraft:trees_water", "minecraft:patch_grass_taiga",
                "minecraft:patch_sugar_cane", "minecraft:seagrass_river"],
-      water=[{"type": "minecraft:salmon", "weight": 5, "minCount": 1, "maxCount": 5}])
+      water=[{"type": "minecraft:salmon", "weight": 5, "minCount": 1, "maxCount": 5}], creature=WET)
 biome("meridian_lake", 0.6, 0.9,
       effects(SKY, FOG, "#36423a", "#121a15", "#666e45", "#4f5a36", 0.002),
       local=[*SHORE],
       vegetal=["minecraft:seagrass_river", "minecraft:patch_waterlily"],
-      water=[{"type": "minecraft:cod", "weight": 5, "minCount": 1, "maxCount": 4}])
+      water=[{"type": "minecraft:cod", "weight": 5, "minCount": 1, "maxCount": 4}], animals=0.1)
 
 # ---------------------------------------------------------------- world preset
 FULL = [-1.0, 1.0]
@@ -238,9 +263,65 @@ for w in SIDES:
         point("meridian_ridge", continentalness=(0.3, 1.0), erosion=(-1.0, -0.375), weirdness=w),
     ]
 
+# ---------------------------------------------------------------- terrain shape
+# Minecraft's overworld terrain is a set of density functions: "offset" (how high the land is), "factor"
+# (how closely it hugs that height, i.e. how smooth) and "jaggedness" (peaks). Meridian wraps them by
+# reference: heights are pulled toward sea level (relief scaled about the sea-level offset, so rivers, lakes
+# and shores stay at the water line), peaks are cut down and slopes are smoothed. The result is rolling
+# forest country you can walk across, with ridges still standing over it.
+SEA_OFFSET = -0.508      # the overworld offset at which land meets sea level (y 63)
+RELIEF = 0.6             # fraction of vanilla's height above/below the sea-level offset that is kept
+JAGGED = 0.35            # fraction of vanilla's peak jaggedness that is kept
+SMOOTH = 1.3             # multiplier on vanilla's factor (higher: fewer cliffs and overhangs)
+
+
+def cached(fn):
+    return {"type": "minecraft:flat_cache", "argument": {"type": "minecraft:cache_2d", "argument": fn}}
+
+
+def mul(a, b):
+    return {"type": "minecraft:mul", "argument1": a, "argument2": b}
+
+
+def add(a, b):
+    return {"type": "minecraft:add", "argument1": a, "argument2": b}
+
+
+DF = f"{NS}/worldgen/density_function/meridian"
+write(f"{DF}/offset.json", cached(add(SEA_OFFSET * (1 - RELIEF), mul(RELIEF, "minecraft:overworld/offset"))))
+write(f"{DF}/factor.json", cached(mul(SMOOTH, "minecraft:overworld/factor")))
+write(f"{DF}/jaggedness.json", cached(mul(JAGGED, "minecraft:overworld/jaggedness")))
+write(f"{DF}/depth.json", add({"type": "minecraft:y_clamped_gradient", "from_y": -64, "to_y": 320,
+                               "from_value": 1.5, "to_value": -1.5}, f"{NS}:meridian/offset"))
+# The overworld's terrain density, rebuilt on Meridian's depth, factor and jaggedness.
+write(f"{DF}/sloped_cheese.json", add(
+    mul(4.0, {"type": "minecraft:quarter_negative", "argument": mul(
+        add(f"{NS}:meridian/depth", mul(f"{NS}:meridian/jaggedness", {"type": "minecraft:half_negative", "argument": {
+            "type": "minecraft:noise", "noise": "minecraft:jagged", "xz_scale": 1500.0, "y_scale": 0.0}})),
+        f"{NS}:meridian/factor")}),
+    "minecraft:overworld/base_3d_noise"))
+
+
+def vanilla_overworld_settings():
+    """Minecraft's own overworld noise settings, read from the game jar ModDevGradle set up for this project."""
+    import glob
+    import zipfile
+    here = os.path.join(os.path.dirname(__file__), "..")
+    jars = sorted(glob.glob(os.path.join(here, "build", "moddev", "artifacts", "*client-extra*.jar")))
+    if not jars:
+        raise SystemExit("Minecraft data not found: run ./gradlew build once so build/moddev/artifacts exists")
+    with zipfile.ZipFile(jars[0]) as z:
+        return json.loads(z.read("data/minecraft/worldgen/noise_settings/overworld.json"))
+
+
+settings = json.dumps(vanilla_overworld_settings())
+for fn in ("depth", "factor", "sloped_cheese"):
+    settings = settings.replace(f'"minecraft:overworld/{fn}"', f'"{NS}:meridian/{fn}"')
+write(f"{NS}/worldgen/noise_settings/meridian.json", json.loads(settings))
+
 write(f"{NS}/worldgen/world_preset/meridian.json", {"dimensions": {
     "minecraft:overworld": {"type": "minecraft:overworld", "generator": {
-        "type": "minecraft:noise", "settings": "minecraft:overworld",
+        "type": "minecraft:noise", "settings": f"{NS}:meridian",
         "biome_source": {"type": "minecraft:multi_noise", "biomes": biomes}}},
     "minecraft:the_nether": {"type": "minecraft:the_nether", "generator": {
         "type": "minecraft:noise", "settings": "minecraft:nether",
@@ -255,4 +336,26 @@ ALL = [f"{NS}:meridian_{b}" for b in ("forest", "woodland", "moor", "ridge", "ri
 write(f"{NS}/tags/worldgen/biome/meridian.json", {"replace": False, "values": ALL})
 write("minecraft/tags/worldgen/biome/is_overworld.json", {"replace": False, "values": ALL})
 # Deliberately NOT added to #is_forest / #is_river: those tags enable mineshafts (has_structure/mineshaft).
-print("worldgen written to", os.path.normpath(ROOT))
+
+
+def order_conflicts():
+    """Minecraft refuses to load (feature order cycle) if two biomes list shared features in opposite order
+    within one generation step. Count feature pairs whose relative order disagrees between biomes."""
+    conflicts = 0
+    for step in range(11):
+        seen = {}
+        for name, st in BIOME_STEPS.items():
+            feats = st[step]
+            for i, a in enumerate(feats):
+                for b in feats[i + 1:]:
+                    if seen.get((b, a)):
+                        conflicts += 1
+                        print(f"  order conflict in step {step}: {a} / {b} ({name} vs {seen[(b, a)]})")
+                    seen.setdefault((a, b), name)
+    return conflicts
+
+
+n = order_conflicts()
+print("worldgen written to", os.path.normpath(ROOT), f"- feature order conflicts: {n}")
+if n:
+    raise SystemExit(1)
