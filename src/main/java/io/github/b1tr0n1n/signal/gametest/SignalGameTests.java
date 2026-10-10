@@ -129,6 +129,13 @@ public final class SignalGameTests {
                 for (int y = 1; y <= top; y++) {
                     helper.setBlock(new BlockPos(x, y, z), y == top ? Blocks.GRASS_BLOCK : y > top - 3 ? Blocks.DIRT : Blocks.STONE);
                 }
+                // A grid of tall trunks, so cuts through the woods are exercised (no crown may be left floating).
+                if (x % 11 == 5 && z % 11 == 5) {
+                    for (int y = top + 1; y <= top + 12; y++) {
+                        helper.setBlock(new BlockPos(x, y, z), Blocks.SPRUCE_LOG);
+                    }
+                    helper.setBlock(new BlockPos(x, top + 13, z), Blocks.SPRUCE_LEAVES);
+                }
             }
         }
         BlockPos anchor = helper.absolutePos(new BlockPos(0, 8, 72));
@@ -184,6 +191,12 @@ public final class SignalGameTests {
             }
         }
         check(chains > 20, "power line cable missing (" + chains + " links)");
+        // No floating trunks: a cut through a tree must take the whole tree above it.
+        for (BlockPos p : BlockPos.betweenClosed(b.minX(), b.minY(), b.minZ(), b.maxX(), b.maxY(), b.maxZ())) {
+            if (level.getBlockState(p).is(Blocks.SPRUCE_LOG)) {
+                check(!level.getBlockState(p.below()).isAir(), "floating tree trunk at " + p);
+            }
+        }
 
         // Fresh scenario: faulted, isolated, dark.
         check(bus.fuse() == FuseState.DAMAGED && bus.isolated(), "fresh scenario must be faulted and isolated");

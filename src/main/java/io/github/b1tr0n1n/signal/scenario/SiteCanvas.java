@@ -7,10 +7,12 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.CrossCollisionBlock;
+import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.StairBlock;
 import net.minecraft.world.level.block.StandingSignBlock;
 import net.minecraft.world.level.block.WallBlock;
@@ -103,8 +105,20 @@ final class SiteCanvas {
 
     void clear(int x, int y, int z) {
         BlockPos p = new BlockPos(x, y, z);
-        if (bounds.isInside(p) && !level.getBlockState(p).isAir()) {
+        BlockState old = level.getBlockState(p);
+        if (bounds.isInside(p) && !old.isAir()) {
             level.setBlock(p, Blocks.AIR.defaultBlockState(), FLAGS);
+            if (old.is(BlockTags.LOGS)) {
+                // Known-shape writes skip neighbour updates, so leaves would keep a stale distance to this log
+                // and never decay. Re-check the touching leaves; the cascade reaches the rest of the crown.
+                for (Direction d : Direction.values()) {
+                    BlockPos n = p.relative(d);
+                    BlockState leaf = level.getBlockState(n);
+                    if (leaf.getBlock() instanceof LeavesBlock) {
+                        level.scheduleTick(n, leaf.getBlock(), 1);
+                    }
+                }
+            }
         }
     }
 

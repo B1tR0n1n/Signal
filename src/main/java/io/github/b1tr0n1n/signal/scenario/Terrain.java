@@ -137,7 +137,17 @@ public final class Terrain {
         }
         c.putSoft(x, surfaceY, z, top);
         // Cut and clear: everything above the new surface, at least up to the old ground.
-        for (int y = surfaceY + 1; y <= Math.max(clearTo, g); y++) {
+        int cleared = Math.max(clearTo, g);
+        for (int y = surfaceY + 1; y <= cleared; y++) {
+            c.clear(x, y, z);
+        }
+        // Nothing may be left hanging over the cut: a tree whose trunk was just cleared (or anything natural
+        // resting on it) would float. Clear the rest of the column up to the first air.
+        for (int y = cleared + 1; y <= c.bounds.maxY(); y++) {
+            BlockState s = c.get(x, y, z);
+            if (s.isAir() || !s.getFluidState().isEmpty() || !(isCover(s) || ScenarioGuard.isNatural(s))) {
+                break;
+            }
             c.clear(x, y, z);
         }
     }
