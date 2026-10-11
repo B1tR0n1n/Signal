@@ -153,3 +153,11 @@ Reversible choices made during implementation. Newest last.
     loaded" (hit with the README's demo coordinates). Planning loads the site's chunks itself, so the anchor
     now only has to be inside the world (`getSpawnablePos`). Verified by building at unloaded anchors with
     `tools/site_sweep.py --anchor`.
+45. **SIGNAL becomes a survival game (owner direction, 2026-10-11).** Supersedes HANDOFF §3.10 (no combat or
+    gun framework), §9 (Adventure mode default) and §30 (no mutants, guns, faction warfare) in the same way
+    #22 superseded the platform. New premise: Elias has been stranded on the Meridian islands for four months
+    and the relay chain is his only way to reach his family. Survival mode, original guns, ammo scarce for
+    everybody, creatures drawn to radio transmissions, and false transmissions built from what the islands
+    have overheard (owner chose "the Listening" blended with "Echoes"). Full design in
+    [`DESIGN_V2.md`](DESIGN_V2.md); build order phases A–F. Kept from the brief: server authority, pure-Java
+    domain rules, original assets only, fictional family, no affection meter.
