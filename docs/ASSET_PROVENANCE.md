@@ -9,13 +9,16 @@ or any other game; no ripped audio, textures, models or music.
 | --- | --- | --- | --- | --- |
 | `block/machine_side.png`, `block/machine_top.png`, `block/generator_front_{isolated,running}.png`, `block/distribution_panel_front_{fault,ok}.png`, `block/pump_controller_front_{0..3}.png`, `block/relay_controller_front_{off,powered,linked}.png`, `block/service_lamp_{off,on}.png`, `item/handheld_radio.png`, `item/replacement_fuse.png` | Generated procedurally by `tools/gen_textures.py` (seeded, reproducible) | SIGNAL project (b1tr0n1n), drawn by the generator script | Project licence (All Rights Reserved, see `gradle.properties`) | Original 16x16 pixel art. Not placeholders. States differ by shape as well as colour (switch blade, needle angle, bar count, cage pattern). |
 
-| `item/revolver.png`, `item/revolver_round.png`, `item/field_knife.png`, `entity/drawn.png` | Generated procedurally by `tools/gen_textures.py` (seeded, reproducible) | SIGNAL project (b1tr0n1n), drawn by the generator script | Project licence | Original pixel art (2026-10-11, Phase A). The Drawn's 64x64 skin is laid out for the original `DrawnModel` box UVs. The spawn egg uses Minecraft's built-in `item/template_spawn_egg` by reference. |
+| `item/revolver.png`, `item/revolver_parts.png`, `item/revolver_round.png`, `item/field_knife.png`, `entity/drawn.png` | Generated procedurally by `tools/gen_textures.py` (seeded, reproducible) | SIGNAL project (b1tr0n1n), drawn by the generator script | Project licence | Original pixel art (2026-10-11, Phase A). The Drawn's 64x64 skin is laid out for the original `DrawnModel` box UVs. The spawn egg uses Minecraft's built-in `item/template_spawn_egg` by reference. |
 
 Regenerate with `python3 tools/gen_textures.py` (requires Pillow).
 
 ## Entity model
 
 `client/render/DrawnModel.java` is an original model built from cubes in code (no imported geometry).
+`models/item/revolver_held.json` is an original 3D item model built from cube elements (barrel, cylinder,
+frame, hammer, trigger guard, grip); `models/item/revolver.json` shows it in the hands and the flat sprite in
+the inventory through NeoForge's `separate_transforms` loader.
 
 ## Models, blockstates, language
 

@@ -286,6 +286,23 @@ def revolver_item():
     save(im, "item/revolver.png")
 
 
+def revolver_parts():
+    """Material sheet for the 3D held revolver (models/item/revolver_held.json): four 8x8 regions."""
+    im = img()
+    rnd = random.Random(381)
+    regions = {(0, 0): (64, 67, 66), (8, 0): (36, 37, 37), (8, 8): (112, 116, 112)}
+    for (u, v), c in regions.items():
+        fill(im, u, v, u + 7, v + 7, c, rnd, 5)
+    for y in range(8, 16):  # walnut grip with grain and worn checkering
+        for x in range(0, 8):
+            grain = (x * 3 + y) % 5 == 0
+            c = (78, 48, 28) if grain else (104, 66, 38)
+            if (x + y) % 2 == 0 and 2 <= x <= 5 and 10 <= y <= 13:
+                c = (70, 44, 26)
+            px(im, x, y, jitter(c, rnd, 5)[:3])
+    save(im, "item/revolver_parts.png")
+
+
 def round_item():
     im = img()
     brass, brass_d, brass_l, lead = (176, 140, 64), (120, 92, 40), (214, 182, 104), (92, 94, 98)
@@ -392,6 +409,7 @@ if __name__ == "__main__":
     radio_item()
     fuse_item()
     revolver_item()
+    revolver_parts()
     round_item()
     knife_item()
     drawn_entity()
