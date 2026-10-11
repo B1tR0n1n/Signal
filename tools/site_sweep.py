@@ -334,7 +334,7 @@ class Rcon:
         self.sock.close()
 
 
-def run_server(seed: int, log: Path) -> str:
+def run_server(seed: int, log: Path, anchor: str = "~ ~ ~") -> str:
     RUN.mkdir(exist_ok=True)
     shutil.rmtree(RUN / "world", ignore_errors=True)
     (RUN / "eula.txt").write_text("eula=true\n")
@@ -360,7 +360,7 @@ def run_server(seed: int, log: Path) -> str:
                     rcon = Rcon(RCON_PORT, password)
                 except OSError:
                     time.sleep(2)
-            result = rcon.command("signal scenario create bellwether ~ ~ ~").strip() or "(no reply)"
+            result = rcon.command(f"signal scenario create bellwether {anchor}").strip() or "(no reply)"
             rcon.command("save-all flush")
             try:
                 rcon.command("stop")
@@ -395,6 +395,7 @@ def main() -> int:
     ap.add_argument("seeds", nargs="+", type=int)
     ap.add_argument("--out", required=True, type=Path)
     ap.add_argument("--no-server", action="store_true", help="analyse worlds already in --out")
+    ap.add_argument("--anchor", default="~ ~ ~", help='site anchor, e.g. "600 70 600" (default: world spawn)')
     args = ap.parse_args()
     args.out.mkdir(parents=True, exist_ok=True)
     pal = Palette()
@@ -403,7 +404,7 @@ def main() -> int:
         wdir = args.out / f"world-{seed}"
         if not args.no_server:
             print(f"[{seed}] server ...", flush=True)
-            res = run_server(seed, args.out / f"server-{seed}.log")
+            res = run_server(seed, args.out / f"server-{seed}.log", args.anchor)
             print(f"[{seed}] {res}", flush=True)
             shutil.rmtree(wdir, ignore_errors=True)
             if (RUN / "world").exists():

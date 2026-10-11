@@ -42,7 +42,7 @@ public final class SignalCommands {
                                 .then(Commands.literal(BellwetherScenario.ID)
                                         .executes(c -> create(c.getSource(), null))
                                         .then(Commands.argument("anchor", BlockPosArgument.blockPos())
-                                                .executes(c -> create(c.getSource(), BlockPosArgument.getLoadedBlockPos(c, "anchor"))))))
+                                                .executes(c -> create(c.getSource(), BlockPosArgument.getSpawnablePos(c, "anchor"))))))
                         .then(Commands.literal("status").executes(c -> status(c.getSource())))
                         .then(Commands.literal("reset")
                                 .then(Commands.literal(BellwetherScenario.ID)

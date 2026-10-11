@@ -148,3 +148,8 @@ Reversible choices made during implementation. Newest last.
     islands in open water. Planning now refuses (new message `command.signal.scenario.too_wet`, telling the
     operator to stand with dry land to the east) when more than 20 % of the compound pad or 30 % of the house
     plots is standing water in the survey.
+44. **The anchor argument need not be loaded.** `/signal scenario create bellwether <x y z>` used vanilla's
+    loaded-position argument, so an explicit anchor away from the player failed with "That position is not
+    loaded" (hit with the README's demo coordinates). Planning loads the site's chunks itself, so the anchor
+    now only has to be inside the world (`getSpawnablePos`). Verified by building at unloaded anchors with
+    `tools/site_sweep.py --anchor`.
