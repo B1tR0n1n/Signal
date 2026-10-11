@@ -33,5 +33,6 @@ public final class SignalMod {
         modBus.addListener(SignalNetwork::register);
         modBus.register(new SurvivalSetup());
         NeoForge.EVENT_BUS.register(new CampaignEvents());
+        NeoForge.EVENT_BUS.register(new io.github.b1tr0n1n.signal.survival.Reloading());
     }
 }

@@ -33,6 +33,7 @@ public final class SignalNetwork {
         PayloadRegistrar r = event.registrar(PROTOCOL);
         r.playToServer(ApplyAllocation.TYPE, ApplyAllocation.CODEC, ApplyAllocation::handle);
         r.playToServer(InstallFuse.TYPE, InstallFuse.CODEC, InstallFuse::handle);
+        r.playToServer(Reload.TYPE, Reload.CODEC, Reload::handle);
         // The handler body references client-only code; it is only ever invoked on the physical client.
         r.playToClient(Snapshot.TYPE, Snapshot.CODEC, (payload, ctx) ->
                 io.github.b1tr0n1n.signal.client.ClientPacketHandlers.onSnapshot(payload.snapshot(), payload.open()));
@@ -87,6 +88,24 @@ public final class SignalNetwork {
         static void handle(InstallFuse p, IPayloadContext ctx) {
             if (ctx.player() instanceof ServerPlayer sender) {
                 SiteInteractions.installFuse(sender, p.pos, p.revision);
+            }
+        }
+    }
+
+    /** The reload key: the server checks the gun and the pockets itself. */
+    public record Reload() implements CustomPacketPayload {
+        public static final Reload INSTANCE = new Reload();
+        public static final Type<Reload> TYPE = new Type<>(id("reload"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, Reload> CODEC = StreamCodec.unit(INSTANCE);
+
+        @Override
+        public Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
+
+        static void handle(Reload p, IPayloadContext ctx) {
+            if (ctx.player() instanceof ServerPlayer sender) {
+                io.github.b1tr0n1n.signal.survival.Reloading.start(sender);
             }
         }
     }

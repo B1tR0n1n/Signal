@@ -9,6 +9,7 @@ import io.github.b1tr0n1n.signal.item.RevolverItem;
 import io.github.b1tr0n1n.signal.registry.ModEntities;
 import io.github.b1tr0n1n.signal.registry.ModItems;
 import io.github.b1tr0n1n.signal.survival.Noise;
+import io.github.b1tr0n1n.signal.survival.Reloading;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestAssertException;
@@ -128,6 +129,34 @@ public final class SurvivalGameTests {
         ModItems.REVOLVER.get().onUseTick(helper.getLevel(), p, gun, 72000 - GUN.reloadTicksPerRound());
         check(RevolverItem.loaded(gun) == 5, "one reload step loads one round, have " + RevolverItem.loaded(gun));
         check(RevolverItem.carried(p) == 2, "and takes it from the pockets, carried " + RevolverItem.carried(p));
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty_5")
+    public static void reloadKeyLoadsUntilThePocketsAreEmpty(GameTestHelper helper) {
+        ServerPlayer p = shooter(helper, new BlockPos(2, 1, 0), "signal_shooter_f");
+        p.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, revolver(2)); // gun first: it takes the held slot
+        p.getInventory().add(new ItemStack(ModItems.REVOLVER_ROUND.get(), 3));
+        check(Reloading.start(p), "reload must start with room and rounds");
+        for (int i = 0; i < GUN.reloadTicksPerRound() * 6; i++) {
+            Reloading.tick(p);
+        }
+        check(RevolverItem.loaded(p.getMainHandItem()) == 5, "2 loaded + 3 carried = 5, have " + RevolverItem.loaded(p.getMainHandItem()));
+        check(RevolverItem.carried(p) == 0, "every carried round loaded");
+        check(!Reloading.isReloading(p), "reload ends when the pockets are empty");
+        check(!Reloading.start(p) || RevolverItem.carried(p) > 0, "nothing to load: reload must not start");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty_5")
+    public static void firingCancelsAReload(GameTestHelper helper) {
+        ServerPlayer p = shooter(helper, new BlockPos(2, 1, 0), "signal_shooter_g");
+        p.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, revolver(1)); // gun first: it takes the held slot
+        p.getInventory().add(new ItemStack(ModItems.REVOLVER_ROUND.get(), 5));
+        check(Reloading.start(p), "reload starts");
+        ModItems.REVOLVER.get().fire(helper.getLevel(), p, p.getMainHandItem());
+        check(!Reloading.isReloading(p), "pulling the trigger stops the reload");
+        Reloading.cancel(p);
         helper.succeed();
     }
 

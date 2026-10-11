@@ -83,6 +83,7 @@ public final class RevolverItem extends Item {
 
     /** Pull the trigger: a shot, or a dry click on an empty chamber. Server only. */
     public void fire(ServerLevel level, Player player, ItemStack stack) {
+        io.github.b1tr0n1n.signal.survival.Reloading.cancel(player); // pulling the trigger stops a reload
         Magazine.Shot shot = Magazine.fire(loaded(stack));
         if (!shot.fired()) {
             level.playSound(null, player.getX(), player.getEyeY(), player.getZ(), ModSounds.REVOLVER_DRY.get(), SoundSource.PLAYERS, 0.8F, 1.0F);
@@ -151,18 +152,24 @@ public final class RevolverItem extends Item {
         if (held == 0 || held % spec.reloadTicksPerRound() != 0) {
             return;
         }
+        Magazine.Load load = loadOneRound(player, stack);
+        if (!load.loadedOne() || load.loaded() >= spec.capacity() || carried(player) == 0) {
+            level.playSound(null, player.getX(), player.getY(), player.getZ(), ModSounds.REVOLVER_COCK.get(), SoundSource.PLAYERS, 0.7F, 1.0F);
+            player.stopUsingItem();
+        }
+    }
+
+    /** Move one carried round into the gun if there is room and a round; shared by both ways of reloading. */
+    public Magazine.Load loadOneRound(Player player, ItemStack stack) {
         Magazine.Load load = Magazine.loadOne(loaded(stack), spec.capacity(), carried(player));
         if (load.loadedOne()) {
             if (!player.getAbilities().instabuild) {
                 takeOneRound(player);
             }
             setLoaded(stack, load.loaded());
-            level.playSound(null, player.getX(), player.getY(), player.getZ(), ModSounds.REVOLVER_LOAD.get(), SoundSource.PLAYERS, 0.7F, 1.0F);
+            player.level().playSound(null, player.getX(), player.getY(), player.getZ(), ModSounds.REVOLVER_LOAD.get(), SoundSource.PLAYERS, 0.7F, 1.0F);
         }
-        if (!load.loadedOne() || load.loaded() >= spec.capacity() || carried(player) == 0) {
-            level.playSound(null, player.getX(), player.getY(), player.getZ(), ModSounds.REVOLVER_COCK.get(), SoundSource.PLAYERS, 0.7F, 1.0F);
-            player.stopUsingItem();
-        }
+        return load;
     }
 
     /** Rounds of this gun's calibre the player carries (creative counts as plenty). */

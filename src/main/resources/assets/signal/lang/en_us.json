@@ -89,7 +89,7 @@
   "command.signal.scenario.surveying": "Surveying the ground and building Bellwether (this takes a few seconds)...",
   "item.signal.revolver": "Service Revolver",
   "item.signal.revolver.rounds": "Loaded: %s / %s",
-  "item.signal.revolver.help": "Use to fire. Sneak + hold use to load rounds you carry. Every shot is heard.",
+  "item.signal.revolver.help": "Use to fire. R to reload (or sneak + hold use). Every shot is heard.",
   "item.signal.revolver_round": ".38 Round",
   "item.signal.field_knife": "Field Knife",
   "item.signal.drawn_spawn_egg": "Drawn Spawn Egg",
@@ -102,5 +102,11 @@
   "subtitles.signal.drawn_alert": "Something turns toward the sound",
   "subtitles.signal.drawn_hurt": "Drawn shrieks",
   "subtitles.signal.drawn_death": "Drawn falls silent",
-  "message.signal.respawn_here": "This place has power now. If you fall, you will wake here."
+  "message.signal.respawn_here": "This place has power now. If you fall, you will wake here.",
+  "key.signal.reload": "Reload",
+  "key.categories.signal": "SIGNAL",
+  "message.signal.reload.progress": "Reloading... %s / %s  (%s spare)",
+  "message.signal.reload.done": "Loaded %s / %s  (%s spare)",
+  "message.signal.reload.full": "Cylinder is full.",
+  "message.signal.reload.none": "No rounds left to load."
 }
