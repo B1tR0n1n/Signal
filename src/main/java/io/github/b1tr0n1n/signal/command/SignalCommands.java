@@ -185,18 +185,33 @@ public final class SignalCommands {
         BlockPos start = data.start();
         player.teleportTo(level, start.getX() + 0.5, start.getY(), start.getZ() + 0.5, data.startYaw(), 0.0F);
         player.setRespawnPosition(level.dimension(), start, data.startYaw(), true, false);
-        player.setGameMode(GameType.ADVENTURE);
-        boolean hasRadio = false;
-        for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
-            if (player.getInventory().getItem(i).is(ModItems.HANDHELD_RADIO.get())) {
-                hasRadio = true;
-                break;
-            }
-        }
-        if (!hasRadio) {
-            player.getInventory().add(new ItemStack(ModItems.HANDHELD_RADIO.get()));
+        player.setGameMode(GameType.SURVIVAL);
+        giveIfMissing(player, new ItemStack(ModItems.HANDHELD_RADIO.get()));
+        if (giveIfMissing(player, loadedRevolver())) {
+            // Four months on the islands: what is left of the kit Elias came with.
+            player.getInventory().add(new ItemStack(ModItems.REVOLVER_ROUND.get(), 4));
+            player.getInventory().add(new ItemStack(ModItems.FIELD_KNIFE.get()));
+            player.getInventory().add(new ItemStack(net.minecraft.world.item.Items.BREAD, 3));
+            player.getInventory().add(new ItemStack(net.minecraft.world.item.Items.TORCH, 6));
         }
         player.sendSystemMessage(Component.translatable("command.signal.scenario.player_ready").withStyle(ChatFormatting.GRAY));
+    }
+
+    /** Give {@code stack} unless the player already carries that item; true when it was given. */
+    private static boolean giveIfMissing(ServerPlayer player, ItemStack stack) {
+        for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
+            if (player.getInventory().getItem(i).is(stack.getItem())) {
+                return false;
+            }
+        }
+        player.getInventory().add(stack);
+        return true;
+    }
+
+    private static ItemStack loadedRevolver() {
+        ItemStack gun = new ItemStack(ModItems.REVOLVER.get());
+        io.github.b1tr0n1n.signal.item.RevolverItem.setLoaded(gun, io.github.b1tr0n1n.signal.domain.FirearmSpec.REVOLVER.capacity());
+        return gun;
     }
 
     private static String fmt(BlockPos p) {

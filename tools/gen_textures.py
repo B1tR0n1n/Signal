@@ -258,6 +258,124 @@ def fuse_item():
     save(im, "item/replacement_fuse.png")
 
 
+def revolver_item():
+    im = img()
+    rnd = random.Random(38)
+    steel, steel_d, steel_l = (58, 60, 58), (34, 35, 34), (96, 98, 94)
+    wood, wood_d = (98, 62, 36), (66, 40, 24)
+    # barrel to the right, slightly raised, front sight at the tip
+    fill(im, 6, 5, 14, 6, steel, rnd, 4)
+    for x in range(6, 15):
+        px(im, x, 4, steel_l if x % 3 else steel)
+    px(im, 14, 3, steel_d)
+    # cylinder with flutes
+    fill(im, 4, 5, 7, 8, steel_d, rnd, 3)
+    for x in (4, 6):
+        px(im, x, 6, steel_l)
+    # frame and trigger guard
+    fill(im, 3, 6, 5, 9, steel, rnd, 4)
+    for x, y in ((5, 9), (6, 10), (7, 10), (7, 9)):
+        px(im, x, y, steel_d)
+    px(im, 6, 9, steel)  # trigger
+    px(im, 2, 5, steel_d)  # hammer
+    # worn wooden grip, angled down and back
+    for i, y in enumerate(range(8, 14)):
+        x0 = 2 - (i // 2)
+        fill(im, max(0, x0), y, max(0, x0) + 2, y, wood, rnd, 6)
+        px(im, max(0, x0), y, wood_d)
+    save(im, "item/revolver.png")
+
+
+def round_item():
+    im = img()
+    brass, brass_d, brass_l, lead = (176, 140, 64), (120, 92, 40), (214, 182, 104), (92, 94, 98)
+    for ox, oy in ((4, 5), (9, 7)):
+        fill(im, ox, oy + 2, ox + 2, oy + 7, brass)
+        for y in range(oy + 2, oy + 8):
+            px(im, ox, y, brass_l)
+            px(im, ox + 2, y, brass_d)
+        fill(im, ox, oy, ox + 2, oy + 1, lead)
+        px(im, ox + 1, oy - 1, lead)
+        fill(im, ox - 1, oy + 8, ox + 3, oy + 8, brass_d)
+    save(im, "item/revolver_round.png")
+
+
+def knife_item():
+    im = img()
+    blade, blade_d, edge = (150, 154, 150), (98, 102, 98), (196, 200, 194)
+    grip, grip_d = (52, 50, 44), (30, 29, 26)
+    for i in range(6, 12):  # short blade: lower-left handle to upper-right tip
+        x, y = i, 15 - i
+        px(im, x, y, blade)
+        if i < 11:
+            px(im, x + 1, y, edge)
+        if i > 6:
+            px(im, x, y + 1, blade_d)
+    px(im, 12, 3, blade_d)
+    for x, y in ((5, 9), (6, 10), (4, 8), (7, 11)):  # guard
+        px(im, x, y, grip_d)
+    for i in range(1, 6):  # wrapped handle
+        px(im, i, 15 - i, grip if i % 2 else grip_d)
+        px(im, i + 1, 15 - i, grip_d)
+    save(im, "item/field_knife.png")
+
+
+def drawn_entity():
+    """64x64 skin for DrawnModel. Box UVs (texOffs, w, h, d) mirror the model's createBodyLayer."""
+    W = 64
+    im = Image.new("RGBA", (W, W), (0, 0, 0, 0))
+    rnd = random.Random(1907)
+    skin, skin_g, skin_d, bruise = (168, 164, 150), (126, 132, 114), (88, 86, 80), (98, 82, 84)
+
+    def mottled(x0, y0, x1, y1):
+        for y in range(y0, y1):
+            for x in range(x0, x1):
+                n = rnd.random()
+                c = skin if n < 0.55 else skin_g if n < 0.85 else skin_d if n < 0.95 else bruise
+                im.putpixel((x, y), jitter(c, rnd, 7))
+
+    def box(u, v, w, h, d):
+        mottled(u + d, v, u + d + 2 * w, v + d)        # top + bottom
+        mottled(u, v + d, u + 2 * (d + w), v + d + h)  # sides, front, back
+        return u + d, v + d                              # front face origin
+
+    tx, ty = box(0, 0, 7, 12, 4)                         # torso: ribs as dark bars on the front
+    for y in range(ty + 2, ty + 9, 2):
+        for x in range(tx + 1, tx + 6):
+            im.putpixel((x, y), jitter(skin_d, rnd, 5))
+    hx, hy = box(24, 0, 5, 5, 6)                         # head: front face at (hx, hy) 5x5, no eyes
+    for x in (hx + 1, hx + 3):                           # shallow pits where eyes would be
+        im.putpixel((x, hy + 1), (52, 48, 46, 255))
+    for x in range(hx + 1, hx + 4):                      # a lipless slit
+        im.putpixel((x, hy + 3), (40, 30, 30, 255))
+    box(48, 0, 2, 4, 2)                                  # neck
+    box(0, 16, 3, 9, 3)                                  # thigh
+    box(12, 16, 2, 9, 2)                                 # shin
+    box(20, 16, 2, 10, 2)                                # upper arm
+    box(28, 16, 2, 10, 2)                                # forearm
+    cx, cy = box(36, 16, 3, 3, 1)                        # claws
+    for y in range(16, 20):
+        for x in range(36, 44):
+            if im.getpixel((x, y))[3]:
+                im.putpixel((x, y), jitter((44, 38, 36), rnd, 6))
+    # Ear membranes: a 0-wide box (texOffs 0,32; h 7, d 7): faces at (0,39) and (7,39), 7x7 each.
+    memb, vein, rim = (104, 70, 68), (150, 92, 86), (58, 40, 40)
+    for face_x in (0, 7):
+        for y in range(39, 46):
+            for x in range(face_x, face_x + 7):
+                lx, ly = x - face_x, y - 39
+                ragged = (lx == 6 and rnd.random() < 0.5) or (ly == 0 and rnd.random() < 0.4)
+                if ragged:
+                    continue
+                c = rim if lx >= 5 or ly <= 1 else memb
+                if (lx - 1) == (6 - ly) // 2 or lx == 1 or (lx + ly) % 5 == 0 and lx > 1:
+                    c = vein
+                im.putpixel((x, y), jitter(c, rnd, 6))
+    out = os.path.join(ROOT, "entity", "drawn.png")
+    os.makedirs(os.path.dirname(out), exist_ok=True)
+    im.save(out)
+
+
 if __name__ == "__main__":
     machine_side()
     machine_top()
@@ -273,4 +391,8 @@ if __name__ == "__main__":
         service_lamp(o)
     radio_item()
     fuse_item()
+    revolver_item()
+    round_item()
+    knife_item()
+    drawn_entity()
     print("textures written to", os.path.normpath(ROOT))

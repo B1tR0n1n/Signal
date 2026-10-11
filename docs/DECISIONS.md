@@ -161,3 +161,19 @@ Reversible choices made during implementation. Newest last.
     have overheard (owner chose "the Listening" blended with "Echoes"). Full design in
     [`DESIGN_V2.md`](DESIGN_V2.md); build order phases A–F. Kept from the brief: server authority, pure-Java
     domain rules, original assets only, fictional family, no affection meter.
+46. **Phase A, Stranded.** The scenario now starts the participant in Survival with what is left of Elias's
+    kit: the radio, a service revolver (six loaded), four spare .38 rounds, a field knife, bread and torches.
+    The whole Bellwether site holds five more rounds (two in the yard barrel, three in the lived-in houses);
+    rounds are never crafted. Firearm rules are pure Java (`FirearmSpec`, `Magazine`, `Hearing`; unit
+    tested). The revolver is server-side hitscan with spread, range falloff and 1.5x head hits; sneak + hold
+    use reloads one round at a time. Every shot is a noise heard 64 blocks by day and 96 at night.
+    **The Drawn** are the Meridian islands' only monster (vanilla monsters removed from the six biomes):
+    blind, they find players by sound (sprinting 16 blocks, walking 8, crouching 3) and walk to gunshots.
+    Natural spawns are throttled in code (20 % of attempts, never 3 or more within 48 blocks) so the dark is
+    dangerous without being a horde. Restoring power at a site moves the respawn point there. Original model,
+    texture and synthesized sounds (ASSET_PROVENANCE). Sneak + use reloads only while there is room and a
+    round to load; otherwise it fires, so the quiet crouching stance can always shoot. Code review caught that
+    a `tickCount % 10` gate on the hearing scan never opens for Drawn with odd entity ids (Mob re-checks idle
+    goals every other tick by tickCount + id); the goal keeps its own countdown. Verified by 6 new GameTests;
+    the hearing scan in live play, natural spawning, and the look and sound in a real client are not yet
+    verified.

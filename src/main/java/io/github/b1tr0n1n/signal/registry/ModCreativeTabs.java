@@ -22,6 +22,10 @@ public final class ModCreativeTabs {
                 out.accept(ModItems.PUMP_CONTROLLER.get());
                 out.accept(ModItems.RELAY_CONTROLLER.get());
                 out.accept(ModItems.SERVICE_LAMP.get());
+                out.accept(ModItems.REVOLVER.get());
+                out.accept(ModItems.REVOLVER_ROUND.get());
+                out.accept(ModItems.FIELD_KNIFE.get());
+                out.accept(ModItems.DRAWN_SPAWN_EGG.get());
             })
             .build());
 

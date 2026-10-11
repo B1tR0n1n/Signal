@@ -1,0 +1,57 @@
+{
+  "revolver_shot": {
+    "subtitle": "subtitles.signal.revolver_shot",
+    "sounds": [
+      "signal:revolver_shot1",
+      "signal:revolver_shot2",
+      "signal:revolver_shot3"
+    ]
+  },
+  "revolver_dry": {
+    "subtitle": "subtitles.signal.revolver_dry",
+    "sounds": [
+      "signal:revolver_dry"
+    ]
+  },
+  "revolver_load": {
+    "subtitle": "subtitles.signal.revolver_load",
+    "sounds": [
+      "signal:revolver_load1",
+      "signal:revolver_load2"
+    ]
+  },
+  "revolver_cock": {
+    "subtitle": "subtitles.signal.revolver_cock",
+    "sounds": [
+      "signal:revolver_cock"
+    ]
+  },
+  "drawn_ambient": {
+    "subtitle": "subtitles.signal.drawn_ambient",
+    "sounds": [
+      "signal:drawn_ambient1",
+      "signal:drawn_ambient2",
+      "signal:drawn_ambient3"
+    ]
+  },
+  "drawn_alert": {
+    "subtitle": "subtitles.signal.drawn_alert",
+    "sounds": [
+      "signal:drawn_alert1",
+      "signal:drawn_alert2"
+    ]
+  },
+  "drawn_hurt": {
+    "subtitle": "subtitles.signal.drawn_hurt",
+    "sounds": [
+      "signal:drawn_hurt1",
+      "signal:drawn_hurt2"
+    ]
+  },
+  "drawn_death": {
+    "subtitle": "subtitles.signal.drawn_death",
+    "sounds": [
+      "signal:drawn_death"
+    ]
+  }
+}

@@ -3,6 +3,9 @@ package io.github.b1tr0n1n.signal.scenario;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
+import io.github.b1tr0n1n.signal.registry.ModItems;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SlabBlock;
 import net.minecraft.world.level.block.state.BlockState;
@@ -321,6 +324,7 @@ public final class BellwetherScenario {
         c.set(1, 0, 0, Blocks.CAULDRON);
         c.set(0, 0, 1, Blocks.BARREL);
         c.set(0, 1, 0, Blocks.BARREL);
+        stash(c, c.rel(0, 0, 0), new ItemStack(ModItems.REVOLVER_ROUND.get(), 2)); // someone's last two rounds
         c.frame(new BlockPos(cx + 44, walk, cz + 34));
         for (int y = 0; y <= 2; y++) {
             c.set(0, y, 0, Prefabs.slab(Blocks.SPRUCE_SLAB, y == 2 ? SlabType.BOTTOM : SlabType.DOUBLE));
@@ -406,6 +410,11 @@ public final class BellwetherScenario {
             Plot p = plots[i];
             Prefabs.house(c, new BlockPos(p.x(), floor[i] + 1, p.z()), p.house(), true);
             if (p.house().lived()) {
+                // What a household can spare on these islands: a little food, a round or two.
+                stash(c, new BlockPos(p.x() + p.house().width() - 2, floor[i] + 1, p.z() + 1),
+                        new ItemStack(ModItems.REVOLVER_ROUND.get(), i == 0 ? 2 : 1), new ItemStack(Items.BREAD, 2));
+            }
+            if (p.house().lived()) {
                 Prefabs.lampPost(c, new BlockPos(p.x() - 2, floor[i] + 1, p.z() - 1));
             }
         }
@@ -414,6 +423,19 @@ public final class BellwetherScenario {
         c.frame(new BlockPos(fx, groundNow(c.level, fx, fz) + 1, fz));
         c.standingSign(0, 0, 0, 8, "BELLWETHER", "<- " + metres + " M", "WATER - REPAIRS", "");
         Prefabs.carWreck(c, new BlockPos(ax + 44, groundNow(c.level, ax + 44, az + 8) + 1, az + 8));
+    }
+
+    /**
+     * Put loot in a container the site just built. Ammunition is scarce everywhere: the whole site holds five
+     * rounds (decision #46). Does nothing if the block is not a container.
+     */
+    static void stash(SiteCanvas c, BlockPos pos, ItemStack... items) {
+        if (c.level.getBlockEntity(pos) instanceof net.minecraft.world.Container box) {
+            int slot = 0;
+            for (ItemStack s : items) {
+                box.setItem(4 + slot++ * 7 % box.getContainerSize(), s);
+            }
+        }
     }
 
     static BlockState slab(net.minecraft.world.level.block.Block b, SlabType type) {

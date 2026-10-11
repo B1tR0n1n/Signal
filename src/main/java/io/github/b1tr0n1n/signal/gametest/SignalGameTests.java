@@ -302,6 +302,18 @@ public final class SignalGameTests {
             }
         }
         check(doors == 2, "expected the two lived-in houses' doors, found " + doors);
+        // Ammunition is scarce: the whole site holds exactly five rounds, in its barrels.
+        int rounds = 0;
+        for (BlockPos p : BlockPos.betweenClosed(b.minX(), b.minY(), b.minZ(), b.maxX(), b.maxY(), b.maxZ())) {
+            if (level.getBlockEntity(p) instanceof Container box) {
+                for (int i = 0; i < box.getContainerSize(); i++) {
+                    if (box.getItem(i).is(ModItems.REVOLVER_ROUND.get())) {
+                        rounds += box.getItem(i).getCount();
+                    }
+                }
+            }
+        }
+        check(rounds == 5, "the site should hold exactly 5 rounds, found " + rounds);
 
         check(bus.fuse() == FuseState.DAMAGED && bus.isolated(), "fresh scenario must be faulted and isolated");
         check(level.getBlockState(panel).getValue(DistributionPanelBlock.FAULT), "panel should show fault");

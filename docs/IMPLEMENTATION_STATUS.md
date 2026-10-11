@@ -9,6 +9,15 @@ support (decision #22). The milestone-one gameplay was ported unchanged and re-v
 
 ## What happens in-game now
 
+**Phase A, Stranded (2026-10-11; see DESIGN_V2.md and decision #46).** Creating the scenario puts you in
+Survival with a radio, a service revolver (6 loaded, 4 spare rounds), a field knife, bread and torches. Fire
+with use; sneak + hold use to reload one round at a time. Every shot is heard by the Drawn, the islands' only
+monster: blind, tall, drawn to sound, rare but deadly at night. Five more rounds are hidden on the site.
+Power the site and you respawn there. Verified: 31 unit tests, 9 GameTests (shot spends a round and wounds,
+empty gun clicks, gunshot heard, reload from pockets, hearing ranks sprint > walk > crouch, the site holds 5
+rounds, plus the original four). **Not verified in a game client**: the Drawn's look and animation, the
+sounds by ear, natural night spawning, the feel of combat.
+
 - **World type "SIGNAL: Meridian Corridor"** on the Create World screen: Minecraft terrain with six
   original biomes (wet old-growth forest, logged woodland, open moor, stony ridge, river, reservoir), an
   overcast grey-green sky, haze, peat-dark water, olive foliage, drifting ash, dead snags, stumps, mud and

@@ -96,6 +96,9 @@ public final class SiteInteractions {
                 level.playSound(null, pos, SoundEvents.BLAZE_SHOOT, SoundSource.BLOCKS, 0.25F, 0.5F);
                 player.sendSystemMessage(Component.translatable("message.signal.generator.closed",
                         BellwetherBus.GENERATOR_SUPPLY, bus.configuredDemand()).withStyle(ChatFormatting.GREEN));
+                // A powered site is somewhere to come back to: respawn here from now on.
+                player.setRespawnPosition(level.dimension(), data.facilityEntrance(), player.getYRot(), true, false);
+                player.sendSystemMessage(Component.translatable("message.signal.respawn_here").withStyle(ChatFormatting.GRAY));
                 changed(level, data, o.delivered());
             }
             default -> inspectGenerator(player, data);

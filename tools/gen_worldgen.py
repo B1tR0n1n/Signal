@@ -58,13 +58,10 @@ def steps(local=(), vegetal=(), lakes=True):
 
 CARVERS = {"air": ["minecraft:cave", "minecraft:cave_extra_underground", "minecraft:canyon"]}
 
+# The islands have one thing in the dark: the Drawn (decision #46). No vanilla monsters. How many is limited
+# in code (SurvivalSetup: 20 % of natural attempts, never 3 or more within 48 blocks).
 MONSTERS = [
-    {"type": "minecraft:spider", "weight": 100, "minCount": 4, "maxCount": 4},
-    {"type": "minecraft:zombie", "weight": 95, "minCount": 4, "maxCount": 4},
-    {"type": "minecraft:skeleton", "weight": 100, "minCount": 4, "maxCount": 4},
-    {"type": "minecraft:creeper", "weight": 100, "minCount": 4, "maxCount": 4},
-    {"type": "minecraft:slime", "weight": 100, "minCount": 4, "maxCount": 4},
-    {"type": "minecraft:enderman", "weight": 10, "minCount": 1, "maxCount": 4},
+    {"type": "signal:drawn", "weight": 100, "minCount": 1, "maxCount": 2},
 ]
 # Wildlife only: no farm animals in the corridor. Packs of wolves, foxes and rabbits in the woods; goats on
 # the ridges; frogs in the wet ground.
