@@ -124,12 +124,20 @@ def simple(name):
     return {"type": "minecraft:simple_state_provider", "state": {"Name": name}}
 
 
-def disk(name, block, rmin, rmax, targets=GROUND):
+def disk(name, block, rmin, rmax, targets=GROUND, near_water=False):
+    target = {"type": "minecraft:matching_blocks", "blocks": targets}
+    if near_water:
+        # Only blocks with water within two blocks beside or just above them: a shore band, not the hillside.
+        ring = [[dx, dy, dz] for dx in range(-2, 3) for dz in range(-2, 3) for dy in (0, 1)
+                if 0 < abs(dx) + abs(dz) <= 2 or (dx, dz) == (0, 0) and dy == 1]
+        target = {"type": "minecraft:all_of", "predicates": [target, {"type": "minecraft:any_of", "predicates": [
+            {"type": "minecraft:matching_fluids", "offset": o, "fluids": ["minecraft:water", "minecraft:flowing_water"]}
+            for o in ring]}]}
     write(f"{NS}/worldgen/configured_feature/{name}.json", {
         "type": "minecraft:disk",
         "config": {"half_height": 1, "radius": {"type": "minecraft:uniform", "min_inclusive": rmin, "max_inclusive": rmax},
                    "state_provider": {"fallback": simple(block), "rules": []},
-                   "target": {"type": "minecraft:matching_blocks", "blocks": targets}}})
+                   "target": target}})
 
 
 def surface_placed(name, feature, chance, extra=()):
@@ -167,7 +175,10 @@ disk("gravel_spill", "minecraft:gravel", 2, 4, GROUND + ["minecraft:stone", "min
 disk("stone_scree", "minecraft:andesite", 1, 3, GROUND + ["minecraft:stone"])
 
 # Shorelines: Minecraft's surface rules lay bright sand at the waterline; turn it to mud and gravel.
-disk("shore_mud", "minecraft:mud", 2, 5, ["minecraft:sand", "minecraft:sandstone", "minecraft:dirt", "minecraft:grass_block"])
+# Mud only where water actually touches: the old version (grass and dirt anywhere, 6 per chunk) turned about
+# 40 % of all dry land to mud, which read as a dark mud field rather than a forest floor.
+disk("shore_mud", "minecraft:mud", 2, 5, ["minecraft:sand", "minecraft:sandstone", "minecraft:dirt", "minecraft:grass_block"],
+     near_water=True)
 disk("shore_gravel", "minecraft:gravel", 2, 4, ["minecraft:sand", "minecraft:sandstone"])
 for shore, cnt in (("shore_mud", 6), ("shore_gravel", 4)):
     write(f"{NS}/worldgen/placed_feature/{shore}.json", {"feature": f"{NS}:{shore}", "placement": [
