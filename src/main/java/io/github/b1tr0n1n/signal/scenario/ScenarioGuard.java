@@ -76,7 +76,9 @@ public final class ScenarioGuard {
         }
         AABB aabb = new AABB(box.minX(), box.minY(), box.minZ(), box.maxX() + 1, box.maxY() + 1, box.maxZ() + 1);
         List<Entity> foreign = level.getEntities((Entity) null, aabb,
-                e -> !(e instanceof Player) && !(e instanceof Mob) && !(e instanceof ItemEntity) && !(e instanceof ExperienceOrb));
+                e -> !(e instanceof Player) && !(e instanceof Mob) && !(e instanceof ItemEntity) && !(e instanceof ExperienceOrb)
+                        // Sand or gravel that started to fall when its chunk was generated: transient terrain, not a build.
+                        && !(e instanceof net.minecraft.world.entity.item.FallingBlockEntity));
         if (!foreign.isEmpty()) {
             occupied += foreign.size();
             if (first == null) {

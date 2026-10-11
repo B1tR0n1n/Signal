@@ -70,6 +70,7 @@
   "command.signal.scenario.occupied": "Refused: %s occupied block(s) or object(s) in the site area (first at %s). Area %s to %s must be natural terrain only. Try another spot or a fresh world.",
   "command.signal.scenario.not_loaded": "Refused: the site area %3$s to %4$s is not fully loaded. Stand closer to the anchor and try again.",
   "command.signal.scenario.out_of_height": "Refused: the site area %3$s to %4$s would extend outside the world's build height.",
+  "command.signal.scenario.too_wet": "Refused: too much of the site area %3$s to %4$s is open water; the compound or Bellwether's houses would stand in a lake. The site is built east of where you stand: move so there is dry land to the east and try again.",
   "command.signal.scenario.created": "Bellwether relay site built into the terrain at %s (bounds %s to %s).",
   "command.signal.scenario.rules": "Scenario rules applied: hostile mobs no longer spawn naturally inside the site. Wildlife and the rest of the world are unchanged.",
   "command.signal.scenario.rules_weather": "Scenario rules applied: hostile mobs no longer spawn naturally inside the site; wildlife and the rest of the world are unchanged. Rain set for this dimension, then the normal weather cycle resumes.",

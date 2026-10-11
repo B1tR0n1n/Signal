@@ -136,14 +136,13 @@ final class Paths {
                         : (n > 0.0 ? style.shoulderAlt() : style.shoulder());
                 t.shape(c, x, z, walk - 1, main.defaultBlockState(), walk + headroom);
                 heights.put(e.getKey(), (double) walk);
-            } else {
-                // Apron: ease from the route surface back to the original ground.
+            } else if (!t.isLevelled(x, z)) {
+                // Apron: ease from the route surface back to the original ground (never across a levelled pad).
                 int g = t.level(x, z);
                 int k = (int) Math.ceil(cell.dist - shoulderHalf);
                 int target = (int) Math.round((walk - 1) + (g - (walk - 1)) * Terrain.blend(k, apron));
                 if (target != g && !(t.wetAt(x, z) && target <= g)) { // never dig into standing water
-                    BlockState top = c.noise(x, z, 4.0) > 0.2 ? Blocks.COARSE_DIRT.defaultBlockState() : Blocks.GRASS_BLOCK.defaultBlockState();
-                    t.shape(c, x, z, target, top, Math.max(target, g) + headroom / 2);
+                    t.shape(c, x, z, target, Terrain.verge(c, x, z, k), Math.max(target, g) + headroom / 2);
                 }
             }
         }
@@ -172,10 +171,10 @@ final class Paths {
             if (h != Math.floor(h) || c.rnd.nextFloat() >= chance) {
                 continue;
             }
-            boolean flat = true;
+            boolean flat = c.get(x, (int) h - 2, z).isSolid();
             for (int[] o : new int[][]{{1, 0}, {-1, 0}, {0, 1}, {0, -1}}) {
                 Double n = heights.get(key(x + o[0], z + o[1]));
-                if (n == null || n != h) {
+                if (n == null || n != h || !c.get(x + o[0], (int) h - 1, z + o[1]).isSolid()) {
                     flat = false;
                     break;
                 }

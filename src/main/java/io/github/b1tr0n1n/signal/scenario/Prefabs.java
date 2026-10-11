@@ -376,7 +376,7 @@ final class Prefabs {
         c.set(1, 0, 1, Blocks.AIR.defaultBlockState());
         c.set(1, 1, 1, Blocks.AIR.defaultBlockState());
         c.set(1, 2, 1, Blocks.LANTERN.defaultBlockState().setValue(LanternBlock.HANGING, true));
-        c.fill(-1, 3, -1, 3, 3, 3, slab(Blocks.WAXED_EXPOSED_CUT_COPPER_SLAB, SlabType.BOTTOM));
+        c.fill(-1, 3, -1, 3, 3, 3, slab(Blocks.WAXED_WEATHERED_CUT_COPPER_SLAB, SlabType.BOTTOM));
         switch (window) {
             case WEST -> {
                 c.set(0, 1, 1, Blocks.GLASS_PANE);
@@ -411,66 +411,152 @@ final class Prefabs {
 
     // ------------------------------------------------------------------ Bellwether houses
 
-    /** Small inhabited house, 7 (x) by 6 (z), door on the south, warm light in the windows, chimney smoke. */
-    static void house(SiteCanvas c, BlockPos base) {
+    /**
+     * A Bellwether house. {@code width} along x (7 or 9), 6 deep; {@code lived} houses have a door, warm
+     * light, a lit chimney and a kitchen; an abandoned one has a missing door, holed roof, broken glass and
+     * cobwebs. {@code garden} adds a potato and carrot bed behind it, {@code woodpile} a log stack by the
+     * side wall and a rain butt under the eave.
+     */
+    record House(int width, boolean lived, boolean garden, boolean woodpile) {
+        /** Plot extent in front-relative rows: doorstep at -2, garden behind out to row 9. */
+        int backRows() {
+            return garden ? 10 : 7;
+        }
+    }
+
+    /** Row {@code f} counted from the door wall (0) to the back wall (5), as a frame z. */
+    private static int fz(boolean doorNorth, int f) {
+        return doorNorth ? f : 5 - f;
+    }
+
+    /**
+     * Draw a house in the frame at {@code base} (walking level, north-west corner of the walls). The door is
+     * in the middle of the north wall when {@code doorNorth}, else the south wall.
+     */
+    static void house(SiteCanvas c, BlockPos base, House v, boolean doorNorth) {
         c.frame(base);
-        c.fill(0, -1, 0, 6, -1, 5, Blocks.STONE_BRICKS.defaultBlockState());
+        int w = v.width(), xMax = w - 1, mid = w / 2;
+        Direction out = doorNorth ? Direction.NORTH : Direction.SOUTH;
+        Direction in = out.getOpposite();
+        c.fill(0, -1, 0, xMax, -1, 5, Blocks.STONE_BRICKS.defaultBlockState());
+        for (int x = 0; x <= xMax; x += xMax) {
+            for (int f = 0; f <= 5; f += 5) {
+                c.set(x, -1, fz(doorNorth, f), Blocks.MOSSY_STONE_BRICKS);
+            }
+        }
+        // Walls: a mud-brick sill course, plank walls on stripped-log corner posts.
         for (int y = 0; y <= 3; y++) {
-            for (int x = 0; x <= 6; x++) {
-                for (int z = 0; z <= 5; z++) {
-                    boolean edge = x == 0 || x == 6 || z == 0 || z == 5;
-                    boolean corner = (x == 0 || x == 6) && (z == 0 || z == 5);
-                    if (!edge) {
-                        c.set(x, y, z, Blocks.AIR.defaultBlockState());
-                    } else if (corner) {
-                        c.set(x, y, z, log(Blocks.STRIPPED_SPRUCE_LOG, Direction.Axis.Y));
-                    } else {
-                        c.set(x, y, z, y == 0 ? Blocks.MUD_BRICKS.defaultBlockState() : Blocks.SPRUCE_PLANKS.defaultBlockState());
-                    }
+            for (int x = 0; x <= xMax; x++) {
+                for (int f = 0; f <= 5; f++) {
+                    boolean edge = x == 0 || x == xMax || f == 0 || f == 5;
+                    boolean corner = (x == 0 || x == xMax) && (f == 0 || f == 5);
+                    BlockState s = !edge ? Blocks.AIR.defaultBlockState()
+                            : corner ? log(Blocks.STRIPPED_SPRUCE_LOG, Direction.Axis.Y)
+                            : y == 0 ? Blocks.MUD_BRICKS.defaultBlockState()
+                            : !v.lived() && c.rnd.nextFloat() < 0.12F ? Blocks.STRIPPED_SPRUCE_WOOD.defaultBlockState()
+                            : Blocks.SPRUCE_PLANKS.defaultBlockState();
+                    c.set(x, y, fz(doorNorth, f), s);
                 }
             }
         }
-        // Windows with warm light behind.
-        for (int[] w : new int[][]{{2, 5}, {4, 5}, {0, 2}, {6, 3}}) {
-            c.set(w[0], 2, w[1], Blocks.GLASS_PANE);
+        // Wall plates along both long walls close the eaves under the first roof course.
+        for (int x = 0; x <= xMax; x++) {
+            c.set(x, 4, fz(doorNorth, 0), log(Blocks.STRIPPED_SPRUCE_LOG, Direction.Axis.X));
+            c.set(x, 4, fz(doorNorth, 5), log(Blocks.STRIPPED_SPRUCE_LOG, Direction.Axis.X));
         }
-        c.set(2, 3, 2, Blocks.LANTERN.defaultBlockState().setValue(LanternBlock.HANGING, true));
-        c.set(4, 3, 3, Blocks.LANTERN.defaultBlockState().setValue(LanternBlock.HANGING, true));
-        // Door.
-        c.set(3, 0, 5, Blocks.SPRUCE_DOOR.defaultBlockState().setValue(DoorBlock.FACING, Direction.SOUTH)
-                .setValue(DoorBlock.HALF, DoubleBlockHalf.LOWER));
-        c.set(3, 1, 5, Blocks.SPRUCE_DOOR.defaultBlockState().setValue(DoorBlock.FACING, Direction.SOUTH)
-                .setValue(DoorBlock.HALF, DoubleBlockHalf.UPPER));
-        // Gable roof running along x.
-        for (int x = -1; x <= 7; x++) {
-            for (int k = 0; k <= 3; k++) {
-                int y = 4 + k;
-                BlockState north = Blocks.DARK_OAK_STAIRS.defaultBlockState().setValue(StairBlock.FACING, Direction.SOUTH);
-                BlockState south = Blocks.DARK_OAK_STAIRS.defaultBlockState().setValue(StairBlock.FACING, Direction.NORTH);
-                if (k < 3) {
-                    c.set(x, y, -1 + k, north);
-                    c.set(x, y, 6 - k, south);
-                } else {
-                    c.set(x, y - 1, 2, Blocks.DARK_OAK_PLANKS);
-                    c.set(x, y - 1, 3, Blocks.DARK_OAK_PLANKS);
-                }
+        // Windows: two either side of the door, two at the back, one in each gable wall.
+        int[][] windows = {{1, 0}, {xMax - 1, 0}, {mid - 1, 5}, {mid + 1, 5}, {0, 2}, {xMax, 3}};
+        for (int[] wn : windows) {
+            BlockState glass = v.lived() || c.rnd.nextFloat() < 0.4F ? Blocks.GLASS_PANE.defaultBlockState()
+                    : c.rnd.nextBoolean() ? Blocks.AIR.defaultBlockState() : Blocks.SPRUCE_PLANKS.defaultBlockState();
+            c.set(wn[0], 2, fz(doorNorth, wn[1]), glass);
+        }
+        // Door, with a step and a lantern beside it when someone lives here.
+        if (v.lived()) {
+            c.set(mid, 0, fz(doorNorth, 0), Blocks.SPRUCE_DOOR.defaultBlockState().setValue(DoorBlock.FACING, out)
+                    .setValue(DoorBlock.HALF, DoubleBlockHalf.LOWER));
+            c.set(mid, 1, fz(doorNorth, 0), Blocks.SPRUCE_DOOR.defaultBlockState().setValue(DoorBlock.FACING, out)
+                    .setValue(DoorBlock.HALF, DoubleBlockHalf.UPPER));
+            c.set(mid + 1, 2, fz(doorNorth, -1), Blocks.LANTERN.defaultBlockState().setValue(LanternBlock.HANGING, true));
+            c.set(mid + 1, 3, fz(doorNorth, -1), Blocks.SPRUCE_FENCE);
+            c.set(mid + 1, 3, fz(doorNorth, 0), Blocks.SPRUCE_PLANKS);
+        } else {
+            c.set(mid, 0, fz(doorNorth, 0), Blocks.AIR.defaultBlockState());
+            c.set(mid, 1, fz(doorNorth, 0), Blocks.AIR.defaultBlockState());
+        }
+        // Gable roof along x: three stair courses each side over a plank ridge.
+        BlockState front = Blocks.DARK_OAK_STAIRS.defaultBlockState().setValue(StairBlock.FACING, in);
+        BlockState back = Blocks.DARK_OAK_STAIRS.defaultBlockState().setValue(StairBlock.FACING, out);
+        for (int x = -1; x <= w; x++) {
+            for (int k = 0; k <= 2; k++) {
+                boolean holed = !v.lived() && k >= 1 && x > 0 && x < xMax && c.rnd.nextFloat() < 0.18F;
+                c.set(x, 4 + k, fz(doorNorth, -1 + k), holed ? Blocks.AIR.defaultBlockState() : front);
+                c.set(x, 4 + k, fz(doorNorth, 6 - k), back);
             }
+            boolean ridgeGap = !v.lived() && x > 1 && x < xMax - 1 && c.rnd.nextFloat() < 0.2F;
+            c.set(x, 6, fz(doorNorth, 2), ridgeGap ? Blocks.AIR.defaultBlockState() : Blocks.DARK_OAK_PLANKS.defaultBlockState());
+            c.set(x, 6, fz(doorNorth, 3), Blocks.DARK_OAK_PLANKS);
         }
-        for (int z = 1; z <= 4; z++) {
+        for (int f = 1; f <= 4; f++) {
             for (int y = 4; y <= 5; y++) {
-                c.set(0, y, z, Blocks.SPRUCE_PLANKS);
-                c.set(6, y, z, Blocks.SPRUCE_PLANKS);
+                c.set(0, y, fz(doorNorth, f), Blocks.SPRUCE_PLANKS);
+                c.set(xMax, y, fz(doorNorth, f), Blocks.SPRUCE_PLANKS);
             }
         }
-        // Chimney with a lit campfire on top: a thin line of smoke you can see from the tower.
-        for (int y = 0; y <= 7; y++) {
-            c.set(5, y, 1, Blocks.COBBLESTONE);
+        // Chimney at the back: a lit campfire on top is a thin line of smoke you can see from the tower.
+        int chimneyX = xMax - 1, chimneyZ = fz(doorNorth, 4);
+        int chimneyTop = v.lived() ? 7 : 6;
+        for (int y = 0; y <= chimneyTop; y++) {
+            c.set(chimneyX, y, chimneyZ, y >= 5 && !v.lived() ? Blocks.MOSSY_COBBLESTONE : Blocks.COBBLESTONE);
         }
-        c.set(5, 8, 1, Blocks.CAMPFIRE.defaultBlockState().setValue(CampfireBlock.LIT, true));
-        // Inside: table, stool, bed roll, a kettle on the stove.
-        c.set(2, 0, 2, slab(Blocks.SPRUCE_SLAB, SlabType.TOP));
-        c.set(4, 0, 1, Blocks.SMOKER.defaultBlockState().setValue(HorizontalDirectionalBlock.FACING, Direction.SOUTH));
-        c.set(1, 0, 4, Blocks.BROWN_CARPET);
-        c.set(2, 0, 4, Blocks.BROWN_CARPET);
+        if (v.lived()) {
+            c.set(chimneyX, 8, chimneyZ, Blocks.CAMPFIRE.defaultBlockState().setValue(CampfireBlock.LIT, true));
+        }
+        if (v.lived()) {
+            houseInterior(c, xMax, mid, doorNorth, in);
+        } else {
+            for (int[] web : new int[][]{{1, 3, 1}, {xMax - 1, 3, 4}, {1, 0, 4}, {mid + 1, 3, 2}}) {
+                c.set(web[0], web[1], fz(doorNorth, web[2]), Blocks.COBWEB);
+            }
+            c.set(2, 0, fz(doorNorth, 3), slab(Blocks.SPRUCE_SLAB, SlabType.BOTTOM)); // the table, fallen in
+        }
+        if (v.woodpile()) {
+            // Woodpile against the west gable (the lane runs off to the east), rain butt at the east back corner.
+            for (int f = 1; f <= 3; f++) {
+                for (int y = 0; y <= (f == 2 ? 1 : 0); y++) {
+                    c.set(-1, y, fz(doorNorth, f), log(Blocks.SPRUCE_LOG, Direction.Axis.X));
+                }
+            }
+            c.set(w, 0, fz(doorNorth, 5), Blocks.WATER_CAULDRON.defaultBlockState()
+                    .setValue(net.minecraft.world.level.block.LayeredCauldronBlock.LEVEL, 3));
+        }
+        if (v.garden()) {
+            for (int x = 1; x <= xMax - 1; x++) {
+                for (int f = 7; f <= 8; f++) {
+                    c.set(x, -1, fz(doorNorth, f), Blocks.FARMLAND.defaultBlockState()
+                            .setValue(net.minecraft.world.level.block.FarmBlock.MOISTURE, 7));
+                    BlockState crop = (x % 3 == 0 ? Blocks.CARROTS : Blocks.POTATOES).defaultBlockState()
+                            .setValue(net.minecraft.world.level.block.CropBlock.AGE, 4 + c.rnd.nextInt(4));
+                    c.set(x, 0, fz(doorNorth, f), crop);
+                }
+            }
+            c.set(xMax, 0, fz(doorNorth, 8), Blocks.COMPOSTER);
+        }
+    }
+
+    /** Lived-in interior: hanging lights, table and stool, stove by the chimney, bed roll, a chest. */
+    private static void houseInterior(SiteCanvas c, int xMax, int mid, boolean doorNorth, Direction in) {
+        c.set(mid - 1, 3, fz(doorNorth, 2), Blocks.LANTERN.defaultBlockState().setValue(LanternBlock.HANGING, true));
+        c.set(mid + 1, 3, fz(doorNorth, 3), Blocks.LANTERN.defaultBlockState().setValue(LanternBlock.HANGING, true));
+        c.set(2, 0, fz(doorNorth, 3), Blocks.SPRUCE_FENCE);
+        c.set(2, 1, fz(doorNorth, 3), Blocks.SPRUCE_PRESSURE_PLATE);
+        c.set(1, 0, fz(doorNorth, 3), Blocks.SPRUCE_TRAPDOOR.defaultBlockState().setValue(TrapDoorBlock.HALF, Half.TOP));
+        c.set(xMax - 2, 0, fz(doorNorth, 4), Blocks.SMOKER.defaultBlockState().setValue(HorizontalDirectionalBlock.FACING,
+                in.getOpposite()));
+        c.set(1, 0, fz(doorNorth, 1), Blocks.BROWN_CARPET);
+        c.set(2, 0, fz(doorNorth, 1), Blocks.BROWN_CARPET);
+        c.set(xMax - 1, 0, fz(doorNorth, 1), Blocks.BARREL);
+        c.set(xMax - 1, 1, fz(doorNorth, 1), Blocks.CANDLE.defaultBlockState()
+                .setValue(net.minecraft.world.level.block.CandleBlock.LIT, true));
     }
 }

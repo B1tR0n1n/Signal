@@ -34,6 +34,9 @@ import net.minecraft.tags.BlockTags;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
+import net.minecraft.world.level.block.SlabBlock;
+import net.minecraft.world.level.block.DoorBlock;
 import net.minecraft.world.level.block.LayeredCauldronBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
@@ -281,7 +284,25 @@ public final class SignalGameTests {
             }
         }
 
-        // Fresh scenario: faulted, isolated, dark.
+        // Bellwether: two lived-in houses, each front door on its footing with walkable lane in front of it, and
+        // no footing (house or facility stone bricks) left standing on air.
+        int doors = 0;
+        for (BlockPos p : BlockPos.betweenClosed(b.minX(), b.minY(), b.minZ(), b.maxX(), b.maxY(), b.maxZ())) {
+            BlockState s = level.getBlockState(p);
+            if (s.is(Blocks.SPRUCE_DOOR) && s.getValue(DoorBlock.HALF) == DoubleBlockHalf.LOWER) {
+                doors++;
+                BlockPos step = p.relative(s.getValue(DoorBlock.FACING));
+                check(level.getBlockState(p.below()).is(Blocks.STONE_BRICKS), "house door not on its footing at " + p);
+                check(!level.getBlockState(step).isSolid() && !level.getBlockState(step.above()).isSolid(),
+                        "house door blocked at " + p);
+                check(level.getBlockState(step.below()).isSolid() || level.getBlockState(step).getBlock() instanceof SlabBlock,
+                        "no ground in front of the house door at " + p);
+            } else if (s.is(Blocks.STONE_BRICKS)) {
+                check(!level.getBlockState(p.below()).isAir(), "footing over air at " + p);
+            }
+        }
+        check(doors == 2, "expected the two lived-in houses' doors, found " + doors);
+
         check(bus.fuse() == FuseState.DAMAGED && bus.isolated(), "fresh scenario must be faulted and isolated");
         check(level.getBlockState(panel).getValue(DistributionPanelBlock.FAULT), "panel should show fault");
         check(!level.getBlockState(gen).getValue(GeneratorBlock.RUNNING), "generator should not be supplying");
@@ -399,6 +420,12 @@ public final class SignalGameTests {
         helper.setBlock(new BlockPos(1, 1, 1), Blocks.GRASS_BLOCK);
         helper.setBlock(new BlockPos(2, 1, 1), Blocks.OAK_LOG);
         check(ScenarioGuard.check(level, box).ok(), "natural terrain must be accepted");
+        // Sand or gravel falling as its chunk generates is terrain in motion, not somebody's build.
+        helper.setBlock(new BlockPos(1, 3, 1), Blocks.GRAVEL);
+        net.minecraft.world.entity.item.FallingBlockEntity falling = net.minecraft.world.entity.item.FallingBlockEntity.fall(
+                level, helper.absolutePos(new BlockPos(1, 3, 1)), Blocks.GRAVEL.defaultBlockState());
+        check(ScenarioGuard.check(level, box).ok(), "a falling gravel block must not block construction");
+        falling.discard();
         helper.setBlock(new BlockPos(2, 2, 2), Blocks.CHEST);
         ScenarioGuard.Report r = ScenarioGuard.check(level, box);
         check(!r.ok() && r.occupied() >= 1, "chest must block construction");

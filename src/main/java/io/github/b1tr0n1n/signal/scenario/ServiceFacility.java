@@ -116,8 +116,8 @@ public final class ServiceFacility {
         for (int x = x0 - 1; x <= x1 + 1; x++) {
             for (int z = z0 - 1; z <= z1 + 1; z++) {
                 boolean rim = x == x0 - 1 || x == x1 + 1 || z == z0 - 1 || z == z1 + 1;
-                // Tar roof (blackstone) with a rusted sheet-metal parapet.
-                c.set(x, 5, z, slab(rim ? Blocks.WAXED_EXPOSED_CUT_COPPER_SLAB : Blocks.POLISHED_BLACKSTONE_SLAB, SlabType.BOTTOM));
+                // Tar roof (blackstone) with a weathered sheet-metal parapet.
+                c.set(x, 5, z, slab(rim ? Blocks.WAXED_WEATHERED_CUT_COPPER_SLAB : Blocks.POLISHED_BLACKSTONE_SLAB, SlabType.BOTTOM));
             }
         }
         for (int i = 0; i < 14; i++) {
@@ -135,8 +135,8 @@ public final class ServiceFacility {
 
         // Doorway (south), open: the yard leads straight in. Awning slab over it.
         c.fill(27, 0, z1, 28, 2, z1, Blocks.AIR.defaultBlockState());
-        c.set(26, 3, z1 + 1, slab(Blocks.WAXED_EXPOSED_CUT_COPPER_SLAB, SlabType.TOP));
-        c.set(29, 3, z1 + 1, slab(Blocks.WAXED_EXPOSED_CUT_COPPER_SLAB, SlabType.TOP));
+        c.set(26, 3, z1 + 1, slab(Blocks.WAXED_WEATHERED_CUT_COPPER_SLAB, SlabType.TOP));
+        c.set(29, 3, z1 + 1, slab(Blocks.WAXED_WEATHERED_CUT_COPPER_SLAB, SlabType.TOP));
         c.wallSign(27, 3, z1 + 1, Direction.SOUTH, "BELLWETHER", "RELAY STN. 4", "SERVICE ROOM", "");
         c.set(28, 3, z1 + 1, Blocks.LANTERN.defaultBlockState().setValue(LanternBlock.HANGING, false));
 
@@ -151,6 +151,21 @@ public final class ServiceFacility {
         c.set(25, 2, z1, Blocks.GLASS_PANE);
         c.set(31, 2, z1, Blocks.GLASS_PANE);
         c.set(32, 2, z1, Blocks.IRON_BARS);
+
+        // Downpipes off the parapet at the two front corners, one emptying into a rain butt.
+        for (int x : new int[]{x0 + 1, x1 - 1}) {
+            for (int y = 0; y <= 4; y++) {
+                c.set(x, y, z1 + 1, Blocks.CHAIN.defaultBlockState().setValue(ChainBlock.AXIS, Direction.Axis.Y));
+            }
+        }
+        c.set(x0 + 1, 0, z1 + 1, Blocks.WATER_CAULDRON.defaultBlockState()
+                .setValue(net.minecraft.world.level.block.LayeredCauldronBlock.LEVEL, 2));
+        // A dark band of damp along the foot of the walls.
+        for (int x = x0 + 1; x < x1; x++) {
+            if (x != 27 && x != 28 && c.rnd.nextFloat() < 0.5F) { // not in the doorway
+                c.set(x, 0, z1, Blocks.MOSSY_STONE_BRICKS);
+            }
+        }
 
         // Overgrowth: vines on the north wall, ferns along the damp base.
         for (int x = x0 + 1; x < x1; x++) {

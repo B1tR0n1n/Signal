@@ -37,6 +37,10 @@ public final class BellwetherScenario {
     /** Facility frame relative to the compound corner: places the service building near the compound's north side. */
     private static final int FRAME_X = 84, FRAME_Z = -24;
     private static final int CX0 = 98, CX1 = 149, CZ0 = -24, CZ1 = 23;
+    /** Bellwether's house plots (see {@link #settlement}). */
+    private static final int VX0 = 108, VX1 = 150, VZ0 = 38, VZ1 = 63;
+    /** Most open water the compound pad and the village plots may cover before planning refuses the spot. */
+    private static final double MAX_WET_COMPOUND = 0.2, MAX_WET_VILLAGE = 0.3;
 
     private BellwetherScenario() {
     }
@@ -82,6 +86,10 @@ public final class BellwetherScenario {
         String problem = null;
         if (minY < level.getMinBuildHeight() || maxY >= level.getMaxBuildHeight()) {
             problem = "command.signal.scenario.out_of_height";
+        } else if (t.wetFraction(ax + CX0, az + CZ0, ax + CX1, az + CZ1) > MAX_WET_COMPOUND
+                || t.wetFraction(ax + VX0, az + VZ0, ax + VX1, az + VZ1) > MAX_WET_VILLAGE) {
+            // Routes cross water as causeways, but a compound or a village standing in a lake is not a site.
+            problem = "command.signal.scenario.too_wet";
         }
         return new Plan(anchor.immutable(), t, bounds, padY, bestX, bestZ, towerY, problem);
     }
@@ -94,20 +102,7 @@ public final class BellwetherScenario {
         int walk = padY + 1;
 
         // 1. Compound pad, blended into the slope.
-        t.pad(c, ax + CX0, az + CZ0, ax + CX1, az + CZ1, padY, 8, 30, (x, z) -> {
-            // Dark trodden ground with gravel wheel ruts and wet mud hollows; rare exposed rock.
-            double n = c.noise(x, z, 7.0), m = c.noise(x + 500, z - 300, 2.0);
-            if (n < -0.5) {
-                return Blocks.MUD.defaultBlockState();
-            }
-            if (n > 0.22 && n < 0.32) {
-                return Blocks.GRAVEL.defaultBlockState(); // thin wheel ruts along the noise contours
-            }
-            if (m > 0.8) {
-                return Blocks.ANDESITE.defaultBlockState();
-            }
-            return (m < -0.6 ? Blocks.PODZOL : Blocks.COARSE_DIRT).defaultBlockState();
-        });
+        t.pad(c, ax + CX0, az + CZ0, ax + CX1, az + CZ1, padY, 8, 30, (x, z) -> yardGround(c, ax, az, x, z));
         // 2. Tower pad on its ridge.
         t.pad(c, plan.towerX() - 4, plan.towerZ() - 4, plan.towerX() + 4, plan.towerZ() + 4, plan.towerY() - 1, 4, 44,
                 (x, z) -> (c.noise(x, z, 3.0) > 0.1 ? Blocks.GRAVEL : Blocks.COARSE_DIRT).defaultBlockState());
@@ -166,6 +161,7 @@ public final class BellwetherScenario {
         // 9. Bellwether, down the slope to the south, with a footpath forking off the road.
         settlement(c, t, ax, az, road);
 
+        t.dressCuts(c);
         c.containFluids();
         c.finishShapes();
 
@@ -297,17 +293,17 @@ public final class BellwetherScenario {
     }
 
     private static void yard(SiteCanvas c, int ax, int az, int walk, int padY) {
-        // Worn track from the gate to the door.
+        // Worn vehicle track from the gate to the door: two muddy wheel ruts either side of a packed crown.
         double[] a = {ax + 98.5, az + 0.5}, b = {ax + 111.5, az - 8.5};
-        for (double tt = 0; tt <= 1.0; tt += 0.02) {
-            double x = a[0] + (b[0] - a[0]) * tt, z = a[1] + (b[1] - a[1]) * tt;
-            for (int ox = -1; ox <= 1; ox++) {
-                for (int oz = -1; oz <= 1; oz++) {
-                    int xx = (int) Math.floor(x) + ox, zz = (int) Math.floor(z) + oz;
-                    if (c.get(xx, walk, zz).isAir()) {
-                        c.put(xx, padY, zz, c.rnd.nextFloat() < 0.5F ? Blocks.PACKED_MUD.defaultBlockState() : Blocks.MUD.defaultBlockState());
-                    }
+        double len = Math.hypot(b[0] - a[0], b[1] - a[1]), ux = (b[0] - a[0]) / len, uz = (b[1] - a[1]) / len;
+        for (int xx = (int) Math.min(a[0], b[0]) - 3; xx <= (int) Math.max(a[0], b[0]) + 3; xx++) {
+            for (int zz = (int) Math.min(a[1], b[1]) - 3; zz <= (int) Math.max(a[1], b[1]) + 3; zz++) {
+                double rx = xx + 0.5 - a[0], rz = zz + 0.5 - a[1];
+                double along = rx * ux + rz * uz, across = Math.abs(rx * uz - rz * ux);
+                if (along < 0 || along > len || across > 2.0 || !c.get(xx, walk, zz).isAir()) {
+                    continue;
                 }
+                c.put(xx, padY, zz, (across > 0.9 ? Blocks.MUD : Blocks.PACKED_MUD).defaultBlockState());
             }
         }
         int cx = ax + CX0, cz = az + CZ0;
@@ -330,40 +326,93 @@ public final class BellwetherScenario {
             c.set(0, y, 0, Prefabs.slab(Blocks.SPRUCE_SLAB, y == 2 ? SlabType.BOTTOM : SlabType.DOUBLE));
             c.set(1, y, 0, Prefabs.slab(Blocks.SPRUCE_SLAB, y == 2 ? SlabType.BOTTOM : SlabType.DOUBLE));
         }
-        // Rain puddles on the pad, where nothing stands.
-        for (int i = 0; i < 40; i++) {
-            int x = cx + 2 + c.rnd.nextInt(CX1 - CX0 - 3), z = cz + 2 + c.rnd.nextInt(CZ1 - CZ0 - 3);
-            boolean clear = true;
-            for (int[] o : new int[][]{{0, 0}, {1, 0}, {-1, 0}, {0, 1}, {0, -1}}) {
-                BlockState below = c.get(x + o[0], padY, z + o[1]);
-                if (!c.get(x + o[0], walk, z + o[1]).isAir() || below.is(Blocks.WATER) && (o[0] != 0 || o[1] != 0)
-                        || !below.isSolid()) {
-                    clear = false;
+        // Rain puddles in the mud hollows: standing water held on every side by the pad, nothing above it.
+        for (int x = cx + 3; x <= ax + CX1 - 3; x++) {
+            for (int z = cz + 3; z <= az + CZ1 - 3; z++) {
+                if (c.noise(x, z, 15.0) > -0.62 || c.noise(x + 500, z - 300, 5.0) > -0.1
+                        || !c.get(x, padY, z).is(Blocks.MUD) || !c.get(x, walk, z).isAir()) {
+                    continue;
                 }
-            }
-            if (clear) {
-                c.put(x, padY, z, Blocks.WATER.defaultBlockState());
+                boolean held = c.get(x, padY - 1, z).isSolid();
+                for (int[] o : new int[][]{{1, 0}, {-1, 0}, {0, 1}, {0, -1}}) {
+                    BlockState side = c.get(x + o[0], padY, z + o[1]);
+                    held &= side.isSolid() || side.is(Blocks.WATER);
+                }
+                if (held) {
+                    c.put(x, padY, z, Blocks.WATER.defaultBlockState());
+                }
             }
         }
     }
 
-    private static void settlement(SiteCanvas c, Terrain t, int ax, int az, List<Paths.Sample> road) {
-        int[][] houses = {{ax + 112, az + 44}, {ax + 125, az + 52}, {ax + 137, az + 42}};
-        for (int[] h : houses) {
-            int y = t.median(h[0], h[1], h[0] + 6, h[1] + 5);
-            t.pad(c, h[0] - 1, h[1] - 1, h[0] + 7, h[1] + 7, y, 4, 12,
-                    (x, z) -> (c.noise(x, z, 3.0) > 0.35 ? Blocks.COARSE_DIRT : Blocks.GRASS_BLOCK).defaultBlockState());
-            Prefabs.house(c, new BlockPos(h[0], y + 1, h[1]));
-            Prefabs.lampPost(c, new BlockPos(h[0] + 8, y + 1, h[1] + 7));
+    /**
+     * Compound ground: weathered tuff hardstanding broken up by bare packed earth, dark mud hollows where the
+     * rain stands, and grass and podzol creeping in along the fence. Broad, low-contrast patches.
+     */
+    private static BlockState yardGround(SiteCanvas c, int ax, int az, int x, int z) {
+        int edge = Math.min(Math.min(x - (ax + CX0), (ax + CX1) - x), Math.min(z - (az + CZ0), (az + CZ1) - z));
+        double big = c.noise(x, z, 15.0), mid = c.noise(x + 500, z - 300, 5.0);
+        if (edge <= 1 || edge == 2 && mid > 0.2) {
+            return (mid < -0.3 ? Blocks.PODZOL : Blocks.GRASS_BLOCK).defaultBlockState();
         }
+        if (big < -0.5 || big < -0.3 && mid < 0.0) {
+            return Blocks.MUD.defaultBlockState();
+        }
+        if (big > 0.5 && mid > -0.1) {
+            return Blocks.PACKED_MUD.defaultBlockState();
+        }
+        return (mid > 0.75 ? Blocks.ANDESITE : Blocks.TUFF).defaultBlockState();
+    }
+
+    /** A house plot in Bellwether: north-west wall corner and the house drawn on it. */
+    private record Plot(int x, int z, Prefabs.House house) {
+    }
+
+    /**
+     * Bellwether: three houses on levelled plots down the slope to the south, joined by a lane that forks off
+     * the road and runs past each front door. Plots are levelled first, then the lanes are carved (their
+     * aprons never re-grade a plot), and only then are the houses drawn, so no cut can reach a wall.
+     */
+    private static void settlement(SiteCanvas c, Terrain t, int ax, int az, List<Paths.Sample> road) {
+        Plot[] plots = {
+                new Plot(ax + 110, az + 44, new Prefabs.House(7, true, true, true)),
+                new Plot(ax + 124, az + 52, new Prefabs.House(9, true, false, true)),
+                new Plot(ax + 140, az + 41, new Prefabs.House(7, false, false, false))};
+        int[] floor = new int[plots.length];
+        for (int i = 0; i < plots.length; i++) {
+            Plot p = plots[i];
+            int w = p.house().width();
+            floor[i] = t.median(p.x(), p.z(), p.x() + w - 1, p.z() + 5);
+            t.pad(c, p.x() - 2, p.z() - 3, p.x() + w + 1, p.z() + p.house().backRows() - 1, floor[i], 4, 12,
+                    (x, z) -> {
+                        double n = c.noise(x, z, 6.0);
+                        return (n > 0.45 ? Blocks.COARSE_DIRT : n < -0.5 ? Blocks.PODZOL : Blocks.GRASS_BLOCK).defaultBlockState();
+                    });
+        }
+        // The lane: road fork -> each doorstep in turn, each leg pinned to the levels it joins.
         Paths.Sample fork = nearestX(road, ax + 86);
-        List<Paths.Sample> lane = Paths.route(t, new double[][]{
-                {fork.x(), fork.z() + 2.0}, {ax + 94, az + 30}, {ax + 108, az + 46}, {ax + 115.5, az + 51.5}},
-                0.4, 0.5, 5, fork.height(), Double.NaN);
-        Paths.carve(c, t, lane, 0.9, 1.7, 3, Paths.FOOTPATH, 10);
+        double[] from = {fork.x(), fork.z() + 2.0};
+        double fromH = fork.height();
+        for (int i = 0; i < plots.length; i++) {
+            Plot p = plots[i];
+            double[] step = {p.x() + p.house().width() / 2 + 0.5, p.z() - 1.5};
+            double[][] via = i == 0 ? new double[][]{from, {ax + 94, az + 26}, {ax + 104, az + 38}, step} : new double[][]{from, step};
+            List<Paths.Sample> lane = Paths.route(t, via, 0.4, 0.5, 5, fromH, floor[i] + 1);
+            Paths.carve(c, t, lane, 0.9, 1.7, 3, Paths.FOOTPATH, 10);
+            from = step;
+            fromH = floor[i] + 1;
+        }
+        for (int i = 0; i < plots.length; i++) {
+            Plot p = plots[i];
+            Prefabs.house(c, new BlockPos(p.x(), floor[i] + 1, p.z()), p.house(), true);
+            if (p.house().lived()) {
+                Prefabs.lampPost(c, new BlockPos(p.x() - 2, floor[i] + 1, p.z() - 1));
+            }
+        }
         int fx = (int) Math.floor(fork.x()) + 2, fz = (int) Math.floor(fork.z()) + 4;
+        int metres = (int) Math.round(Math.hypot(plots[0].x() + 3 - fx, plots[0].z() + 3 - fz) / 10.0) * 10;
         c.frame(new BlockPos(fx, groundNow(c.level, fx, fz) + 1, fz));
-        c.standingSign(0, 0, 0, 8, "BELLWETHER", "<- 300 M", "WATER - REPAIRS", "");
+        c.standingSign(0, 0, 0, 8, "BELLWETHER", "<- " + metres + " M", "WATER - REPAIRS", "");
         Prefabs.carWreck(c, new BlockPos(ax + 44, groundNow(c.level, ax + 44, az + 8) + 1, az + 8));
     }
 
