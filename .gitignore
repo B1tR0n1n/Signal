@@ -27,3 +27,4 @@ forge*changelog.txt
 # SIGNAL
 run-data
 repo
+__pycache__/
