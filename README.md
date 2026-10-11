@@ -71,6 +71,18 @@ The command announces everything it changes: your game mode and spawn point, hos
 spawning naturally inside the site (no game rule is changed; wildlife still spawns), and rain in the Overworld.
 **Installing the mod alone changes nothing in any world.**
 
+### Demo world (known good)
+
+The site is built east of wherever you stand, so the land there decides how it looks. For a demo, use a
+world that was checked headlessly with `tools/site_sweep.py`:
+
+1. Create a new world: **World Type: SIGNAL: Meridian Corridor**, **Seed: `1`**, Allow Cheats: ON.
+2. Run `/signal scenario create bellwether 112 65 176` (world spawn on that seed). You start on the road in
+   old-growth forest; the tower stands on the high ground across the water to the north-east.
+
+Seed `91024` (anchor `0 63 0`) is the other checked layout. Elsewhere, stand on dry ground with dry land to
+the east: the command refuses, and says so, when the compound or the houses would end up in a lake.
+
 ## Playing the first site
 
 Follow the road east through the trees, under the power line and over the old rail crossing, to the
@@ -108,7 +120,8 @@ src/main/java/io/github/b1tr0n1n/signal/
   client/     panel screen (client-only, reached through DistExecutor)
   block/ item/ registry/ command/ gametest/
 src/test/java/   JUnit domain tests
-tools/           reproducible generators: textures, worldgen (biomes/world type), GameTest structures
+tools/           reproducible generators: textures, worldgen (biomes/world type), GameTest structures;
+                 site_sweep.py builds the site headlessly on many seeds and checks/maps the result
 docs/            status, decisions, compatibility pins, asset provenance, design summary, handoff
 ```
 

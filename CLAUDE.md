@@ -16,6 +16,8 @@ Original Minecraft adventure mod. Full brief: `docs/HANDOFF.md`. Status: `docs/I
 - Never change ordinary worlds automatically; scenario changes happen only via `/signal scenario ...` and
   are announced. Scenario writes go through `SiteCanvas`, which enforces the planned bounds.
 - Before claiming a feature: `./gradlew build` (unit tests) and `./gradlew runGameTestServer` (integration).
+  For site/worldgen changes also run `tools/site_sweep.py --out <dir> 91024 1 2 3 4 5 6 7` (headless, several
+  seeds; must report 0 hanging water and 0 floating logs) and look at the maps it writes.
   Report graphical testing separately from build/test results; shader output cannot be verified here.
 - Record reversible decisions in `docs/DECISIONS.md` and every shipped asset in `docs/ASSET_PROVENANCE.md`.
   No copied or ripped assets; textures come from `tools/gen_textures.py`.

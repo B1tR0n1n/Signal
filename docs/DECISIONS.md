@@ -100,3 +100,51 @@ Reversible choices made during implementation. Newest last.
     used to switch mob spawning off for the whole world, which also stopped wildlife from spawning after
     generation. Now natural hostile spawns are refused only inside the site bounds (plus 8 blocks) while a
     campaign is active (`CampaignEvents#onSpawnPosition`); game rules are untouched.
+35. **Low-contrast compound yard.** The pad used to pick mud, coarse dirt, gravel, andesite and podzol from
+    7-block noise; in play it read as a bright orange checkerboard (coarse dirt is orange, and the five blocks
+    span 59–136 in brightness). The yard is now weathered tuff hardstanding with broad (15-block) patches of
+    packed earth and mud hollows, grass and podzol creeping in along the fence, a two-rut vehicle track from
+    the gate to the door, and puddles only in the mud hollows, each held by the pad on every side.
+36. **Cut faces are dressed as rock, verges as grass.** Re-graded aprons beside roads and pads used to be
+    40 % coarse dirt from small-scale noise, and every cut showed bare stepped dirt. Verges are now grass with
+    podzol drifts (coarse dirt only within two blocks of the edge), and a final pass (`Terrain#dressCuts`)
+    turns soil left showing in the side of any sculpted column, or of the natural ground right beside one,
+    into tuff/andesite/stone in broad bands. Measured with `tools/site_sweep.py` on seed 91024: bare dirt
+    faces in the site 1455 → 655 (the rest is natural terrain outside the sculpted area).
+37. **Levelled ground is final.** A pad's levelled columns are recorded; later pad aprons and route aprons
+    blend around them instead of re-grading them. Before, two nearby pads chewed into each other, and a lane
+    carved after a house could dig its apron into the house's footing.
+38. **Bellwether houses: plots, then lanes, then houses.** The lane used to be carved after the houses, with a
+    3-block apron that cleared 5 blocks above ground 2 blocks from house 1's front wall. Now each house gets a
+    levelled plot, the lane is carved from the road fork past every front door (each leg pinned to the
+    levels it joins), and only then are the houses drawn. Three variants instead of three clones: a 7-wide
+    cottage with a vegetable garden, woodpile and rain butt; a 9-wide house; an abandoned one (no door, holed
+    roof and ridge, broken windows, cobwebs, cold chimney). A stripped-log wall plate closes the eaves (the old
+    roof left a 1-block gap at each corner). The road sign gives the measured distance (it said 300 m for
+    about 50).
+39. **Shore mud only at the shore.** `shore_mud` targeted grass and dirt anywhere, 6 disks per chunk, so about
+    40 % of dry land in the Meridian Corridor was mud (measured: mud 39.6 %, grass 27.1 % of the natural
+    surface around the site on seed 91024). Its target now also requires water within two blocks beside or
+    just above the block, which keeps the intended mud banks on lakes and rivers.
+40. **Service building metal is weathered, not exposed, copper.** Exposed copper renders salmon-pink in
+    vanilla lighting and was the loudest colour on the site (parapet, awning, booth roof). Weathered copper
+    reads as aged green-grey metal. The building also gets downpipes with a rain butt and a damp band along
+    the foot of the front wall; equipment, bindings and the tested interior are unchanged.
+41. **Headless site sweep** (`tools/site_sweep.py`): builds the site at world spawn on any number of seeds via
+    a dev server (RCON bound to localhost, fresh random password per run), then reads the region files directly and reports hanging water, floating logs,
+    bare dirt faces and steep steps, with a shaded top-down map per seed. It is the multi-seed check the
+    client playtest could not give; it does not replace looking at the site in a real client.
+42. **No surface stands on a void; falling terrain never blocks the site.** Found by the seed sweep. Seed 2: a
+    road gravel block was placed over a natural air pocket beside a pond (the survey fills from the old ground
+    up, not underneath it); gravel schedules its fall even on a known-shape write, so it dropped and left a
+    road puddle hanging over the hole. `Terrain#shape` now closes any air, fluid or cover pocket in the 8
+    blocks under a new surface, and road puddles also check the actual blocks around them. Seed 3: the guard
+    refused the whole site over one `falling_block` entity (worldgen gravel falling as its chunk loaded);
+    falling blocks are now treated as terrain. Code review also caught that the tower pad's apron can reach one
+    column past the site edge; `shape` now ignores columns outside the bounds (every write there was already
+    a no-op), so the new under-fill and cut dressing can never throw "write outside bounds".
+43. **Refuse a site whose compound or village would stand in a lake.** Routes cross water as causeways, but on
+    seeds 4, 6 and 7 world spawn sits on a lakeshore and the whole compound, lane and houses were built as
+    islands in open water. Planning now refuses (new message `command.signal.scenario.too_wet`, telling the
+    operator to stand with dry land to the east) when more than 20 % of the compound pad or 30 % of the house
+    plots is standing water in the survey.
