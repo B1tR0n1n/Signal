@@ -184,3 +184,6 @@ Reversible choices made during implementation. Newest last.
     through `Entity.turn`, presses screen buttons by label and quick-moves container slots. It is off
     unless `SIGNAL_PILOT_PORT` is set and then listens on loopback only; `tools/pilot.py` is the client.
     Reversible: delete the two classes and the script. Not a gameplay feature and never on in a normal run.
+    Later the same day it gained creative building (place against a face with a real right-click, hold,
+    break, fly, alt, a client-side ground scan, several connections); `tools/pilot_builds/listening_post.py`
+    builds a hut and mast by hand from a few flying work stations, then re-places anything the world lacks.

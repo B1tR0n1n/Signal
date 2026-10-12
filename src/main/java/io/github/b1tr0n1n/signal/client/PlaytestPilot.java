@@ -20,7 +20,13 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
@@ -73,6 +79,10 @@ public final class PlaytestPilot {
     private static double[] goal;
     private static int replans;
     private static String lastResult = "";
+    private static BlockHitResult pendingPlace;
+    private static BlockPos pendingBreak;
+    private static Double altitude;
+    private static int pendingTicks;
 
     private PlaytestPilot() {
     }
@@ -102,19 +112,27 @@ public final class PlaytestPilot {
         try (ServerSocket server = new ServerSocket(PORT, 4, InetAddress.getLoopbackAddress())) {
             LOGGER.info("Playtest pilot listening on 127.0.0.1:{}", PORT);
             while (true) {
-                try (Socket socket = server.accept();
-                     BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
-                     PrintWriter out = new PrintWriter(socket.getOutputStream(), true, StandardCharsets.UTF_8)) {
-                    String line;
-                    while ((line = in.readLine()) != null) {
-                        out.println(dispatch(line.trim()));
-                    }
-                } catch (IOException e) {
-                    LOGGER.debug("Playtest pilot connection closed: {}", e.getMessage());
-                }
+                Socket socket = server.accept();
+                Thread conn = new Thread(() -> converse(socket), "signal-playtest-pilot-conn");
+                conn.setDaemon(true);
+                conn.start();
             }
         } catch (IOException e) {
             LOGGER.error("Playtest pilot could not listen on {}", PORT, e);
+        }
+    }
+
+    /** One client connection; commands still run one at a time on the client thread. */
+    private static void converse(Socket socket) {
+        try (socket;
+             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
+             PrintWriter out = new PrintWriter(socket.getOutputStream(), true, StandardCharsets.UTF_8)) {
+            String line;
+            while ((line = in.readLine()) != null) {
+                out.println(dispatch(line.trim()));
+            }
+        } catch (IOException e) {
+            LOGGER.debug("Playtest pilot connection closed: {}", e.getMessage());
         }
     }
 
@@ -169,6 +187,84 @@ public final class PlaytestPilot {
                 stuckTicks = 0;
                 return "{\"ok\":true,\"waypoints\":" + route.size() + "}";
             }
+            case "place": { // place X Y Z: turn onto a neighbouring face, then right-click it with the held item
+                BlockPos target = new BlockPos(Integer.parseInt(a[1]), Integer.parseInt(a[2]), Integer.parseInt(a[3]));
+                if (!mc.level.getBlockState(target).canBeReplaced()) {
+                    return err("occupied " + target.toShortString());
+                }
+                BlockHitResult hit = a.length > 4 ? supportFrom(mc, target, Direction.byName(a[4])) : support(mc, target);
+                if (hit == null) {
+                    return err("nothing to place against at " + target.toShortString());
+                }
+                if (p.getEyePosition().distanceTo(hit.getLocation()) > p.blockInteractionRange()) {
+                    return err("too far from " + target.toShortString());
+                }
+                aimType = null;
+                aimAt(p, hit.getLocation());
+                pendingPlace = hit;
+                pendingTicks = 0;
+                lastResult = "placing";
+                return ok();
+            }
+            case "hold": { // hold ITEM: select it from the hotbar, or (creative) pick it into the selected slot
+                var item = BuiltInRegistries.ITEM.get(ResourceLocation.parse(a[1]));
+                for (int i = 0; i < 9; i++) {
+                    if (p.getInventory().getItem(i).is(item)) {
+                        p.getInventory().selected = i;
+                        return ok();
+                    }
+                }
+                if (!p.getAbilities().instabuild || mc.gameMode == null) {
+                    return err("not in the hotbar and not in creative: " + a[1]);
+                }
+                ItemStack stack = new ItemStack(item, 64);
+                p.getInventory().setItem(p.getInventory().selected, stack);
+                mc.gameMode.handleCreativeModeItemAdd(stack, 36 + p.getInventory().selected);
+                return ok();
+            }
+            case "break": { // break X Y Z: turn onto the block and hit it (instant in creative)
+                BlockPos target = new BlockPos(Integer.parseInt(a[1]), Integer.parseInt(a[2]), Integer.parseInt(a[3]));
+                if (mc.level.getBlockState(target).isAir()) {
+                    return ok();
+                }
+                if (p.getEyePosition().distanceTo(Vec3.atCenterOf(target)) > p.blockInteractionRange() + 0.5) {
+                    return err("too far from " + target.toShortString());
+                }
+                aimType = null;
+                aimAt(p, Vec3.atCenterOf(target));
+                pendingBreak = target;
+                pendingTicks = 0;
+                lastResult = "breaking";
+                return ok();
+            }
+            case "fly": // fly on|off (creative)
+                if (!p.getAbilities().mayfly) {
+                    return err("cannot fly in this game mode");
+                }
+                p.getAbilities().flying = a[1].equals("on");
+                p.onUpdateAbilities();
+                if (!p.getAbilities().flying) {
+                    altitude = null;
+                }
+                return ok();
+            case "alt": // alt Y: while flying, rise or sink to Y
+                altitude = Double.parseDouble(a[1]);
+                return ok();
+            case "heights": { // heights X0 Z0 W D: ground height (top non-leaf surface) per column, rows by z
+                int x0 = Integer.parseInt(a[1]), z0 = Integer.parseInt(a[2]), w = Integer.parseInt(a[3]), d = Integer.parseInt(a[4]);
+                List<String> rows = new ArrayList<>();
+                for (int dz = 0; dz < d; dz++) {
+                    List<String> row = new ArrayList<>();
+                    for (int dx = 0; dx < w; dx++) {
+                        row.add(Integer.toString(ground(mc, x0 + dx, z0 + dz)));
+                    }
+                    rows.add("[" + String.join(",", row) + "]");
+                }
+                return "{\"ok\":true,\"heights\":[" + String.join(",", rows) + "]}";
+            }
+            case "block": // block X Y Z: what is there
+                return "{\"ok\":true,\"block\":" + q(mc.level.getBlockState(new BlockPos(Integer.parseInt(a[1]),
+                        Integer.parseInt(a[2]), Integer.parseInt(a[3]))).toString()) + "}";
             case "probe":
                 return "{\"ok\":true,\"probe\":" + q(PilotPath.probe(mc.level, p.position())) + "}";
             case "stop":
@@ -288,6 +384,50 @@ public final class PlaytestPilot {
         lookPitch = (float) -Math.toDegrees(Math.atan2(d.y, Math.hypot(d.x, d.z)));
     }
 
+    /**
+     * Top ground block of a column, looking through trees and plants. Clients only receive the MOTION_BLOCKING
+     * heightmap, so start there and walk down past leaves, logs and anything replaceable.
+     */
+    private static int ground(Minecraft mc, int x, int z) {
+        BlockPos.MutableBlockPos p = new BlockPos.MutableBlockPos(x, mc.level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z) - 1, z);
+        while (p.getY() > mc.level.getMinBuildHeight()) {
+            var s = mc.level.getBlockState(p);
+            if (!(s.isAir() || s.canBeReplaced() || s.is(BlockTags.LEAVES) || s.is(BlockTags.LOGS))) {
+                break;
+            }
+            p.move(Direction.DOWN);
+        }
+        return p.getY();
+    }
+
+    /** A face of a solid neighbour to place {@code target} against: below first, then the sides, then above. */
+    private static BlockHitResult support(Minecraft mc, BlockPos target) {
+        List<Direction> order = List.of(Direction.DOWN, Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST, Direction.UP);
+        for (Direction d : order) {
+            BlockHitResult hit = supportFrom(mc, target, d);
+            if (hit != null) {
+                return hit;
+            }
+        }
+        return null;
+    }
+
+    /** Place {@code target} against its neighbour in direction {@code d} (e.g. UP hangs a lantern), if solid. */
+    private static BlockHitResult supportFrom(Minecraft mc, BlockPos target, Direction d) {
+        if (d == null) {
+            return null;
+        }
+        BlockPos n = target.relative(d);
+        var state = mc.level.getBlockState(n);
+        if (state.isAir() || state.canBeReplaced()) {
+            return null;
+        }
+        Direction face = d.getOpposite();
+        // Side hits low on the face so slabs and stairs come out bottom-half, like a player aiming low.
+        Vec3 at = Vec3.atCenterOf(target).relative(d, 0.5).add(0, face.getAxis().isHorizontal() ? -0.25 : 0, 0);
+        return new BlockHitResult(at, face, n, false);
+    }
+
     private static String press(Minecraft mc, String label) {
         if (mc.screen == null) {
             return err("no screen");
@@ -322,6 +462,38 @@ public final class PlaytestPilot {
         }
         if (useTicks > 0) {
             mc.options.keyUse.setDown(--useTicks > 0);
+        }
+        if (altitude != null && p.getAbilities().flying) {
+            double dy = altitude - p.getY();
+            mc.options.keyJump.setDown(dy > 0.25);
+            mc.options.keyShift.setDown(dy < -0.25);
+            if (Math.abs(dy) <= 0.25) {
+                altitude = null;
+                mc.options.keyJump.setDown(false);
+                mc.options.keyShift.setDown(false);
+            }
+        }
+        if (pendingBreak != null) {
+            float yawErr = Math.abs(Mth.wrapDegrees(lookYaw - p.getYRot()));
+            float pitchErr = Math.abs(lookPitch - p.getXRot());
+            if (yawErr < 3 && pitchErr < 3 || ++pendingTicks > 30) {
+                mc.gameMode.startDestroyBlock(pendingBreak, Direction.UP);
+                p.swing(InteractionHand.MAIN_HAND);
+                lastResult = "broke";
+                pendingBreak = null;
+            }
+        }
+        if (pendingPlace != null) {
+            float yawErr = Math.abs(Mth.wrapDegrees(lookYaw - p.getYRot()));
+            float pitchErr = Math.abs(lookPitch - p.getXRot());
+            if (yawErr < 3 && pitchErr < 3 || ++pendingTicks > 30) {
+                var result = mc.gameMode.useItemOn(p, InteractionHand.MAIN_HAND, pendingPlace);
+                if (result.consumesAction()) {
+                    p.swing(InteractionHand.MAIN_HAND);
+                }
+                lastResult = result.consumesAction() ? "placed" : "place failed: " + result;
+                pendingPlace = null;
+            }
         }
         if (walkTo != null) {
             steer(mc, p);
