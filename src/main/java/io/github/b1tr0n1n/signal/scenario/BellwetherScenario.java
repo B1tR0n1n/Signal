@@ -108,7 +108,7 @@ public final class BellwetherScenario {
         t.pad(c, ax + CX0, az + CZ0, ax + CX1, az + CZ1, padY, 8, 30, (x, z) -> yardGround(c, ax, az, x, z));
         // 2. Tower pad on its ridge.
         t.pad(c, plan.towerX() - 4, plan.towerZ() - 4, plan.towerX() + 4, plan.towerZ() + 4, plan.towerY() - 1, 4, 44,
-                (x, z) -> (c.noise(x, z, 3.0) > 0.1 ? Blocks.GRAVEL : Blocks.COARSE_DIRT).defaultBlockState());
+                (x, z) -> (c.noise(x, z, 3.0) > 0.1 ? Blocks.GRAVEL : Blocks.TUFF).defaultBlockState());
 
         // 3. Maintenance road: wanders through the trees and arrives level with the compound gate.
         List<Paths.Sample> road = Paths.route(t, new double[][]{
@@ -165,6 +165,7 @@ public final class BellwetherScenario {
         settlement(c, t, ax, az, road);
 
         t.dressCuts(c);
+        c.removeOrphanLeaves();
         c.containFluids();
         c.finishShapes();
 
@@ -306,7 +307,7 @@ public final class BellwetherScenario {
                 if (along < 0 || along > len || across > 2.0 || !c.get(xx, walk, zz).isAir()) {
                     continue;
                 }
-                c.put(xx, padY, zz, (across > 0.9 ? Blocks.MUD : Blocks.PACKED_MUD).defaultBlockState());
+                c.put(xx, padY, zz, (across > 0.9 ? Blocks.MUD : Blocks.PODZOL).defaultBlockState());
             }
         }
         int cx = ax + CX0, cz = az + CZ0;
@@ -363,7 +364,7 @@ public final class BellwetherScenario {
             return Blocks.MUD.defaultBlockState();
         }
         if (big > 0.5 && mid > -0.1) {
-            return Blocks.PACKED_MUD.defaultBlockState();
+            return Blocks.PODZOL.defaultBlockState(); // bare trodden earth where the hardstanding broke up
         }
         return (mid > 0.75 ? Blocks.ANDESITE : Blocks.TUFF).defaultBlockState();
     }
@@ -390,7 +391,7 @@ public final class BellwetherScenario {
             t.pad(c, p.x() - 2, p.z() - 3, p.x() + w + 1, p.z() + p.house().backRows() - 1, floor[i], 4, 12,
                     (x, z) -> {
                         double n = c.noise(x, z, 6.0);
-                        return (n > 0.45 ? Blocks.COARSE_DIRT : n < -0.5 ? Blocks.PODZOL : Blocks.GRASS_BLOCK).defaultBlockState();
+                        return (n > 0.45 ? Blocks.PODZOL : n < -0.5 ? Blocks.MUD : Blocks.GRASS_BLOCK).defaultBlockState();
                     });
         }
         // The lane: road fork -> each doorstep in turn, each leg pinned to the levels it joins.

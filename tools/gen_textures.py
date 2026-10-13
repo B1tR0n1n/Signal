@@ -342,7 +342,8 @@ def drawn_entity():
     W = 64
     im = Image.new("RGBA", (W, W), (0, 0, 0, 0))
     rnd = random.Random(1907)
-    skin, skin_g, skin_d, bruise = (168, 164, 150), (126, 132, 114), (88, 86, 80), (98, 82, 84)
+    # Wet ash and bruise: dark enough to be a shape in the fog, not bone-white like a skeleton.
+    skin, skin_g, skin_d, bruise = (92, 90, 84), (70, 77, 66), (46, 45, 43), (84, 60, 62)
 
     def mottled(x0, y0, x1, y1):
         for y in range(y0, y1):
@@ -356,15 +357,12 @@ def drawn_entity():
         mottled(u, v + d, u + 2 * (d + w), v + d + h)  # sides, front, back
         return u + d, v + d                              # front face origin
 
-    tx, ty = box(0, 0, 7, 12, 4)                         # torso: ribs as dark bars on the front
-    for y in range(ty + 2, ty + 9, 2):
-        for x in range(tx + 1, tx + 6):
-            im.putpixel((x, y), jitter(skin_d, rnd, 5))
-    hx, hy = box(24, 0, 5, 5, 6)                         # head: front face at (hx, hy) 5x5, no eyes
-    for x in (hx + 1, hx + 3):                           # shallow pits where eyes would be
-        im.putpixel((x, hy + 1), (52, 48, 46, 255))
-    for x in range(hx + 1, hx + 4):                      # a lipless slit
-        im.putpixel((x, hy + 3), (40, 30, 30, 255))
+    tx, ty = box(0, 0, 7, 12, 4)                         # torso: a dark spine streak, nothing skeletal
+    for y in range(ty, ty + 12):
+        im.putpixel((tx + 3, y), jitter(skin_d, rnd, 4))
+    hx, hy = box(24, 0, 5, 5, 6)                         # head: smooth and eyeless, one vertical seam
+    for y in range(hy, hy + 5):
+        im.putpixel((hx + 2, y), jitter((38, 30, 30), rnd, 3))
     box(48, 0, 2, 4, 2)                                  # neck
     box(0, 16, 3, 9, 3)                                  # thigh
     box(12, 16, 2, 9, 2)                                 # shin
@@ -375,17 +373,17 @@ def drawn_entity():
         for x in range(36, 44):
             if im.getpixel((x, y))[3]:
                 im.putpixel((x, y), jitter((44, 38, 36), rnd, 6))
-    # Ear membranes: a 0-wide box (texOffs 0,32; h 7, d 7): faces at (0,39) and (7,39), 7x7 each.
-    memb, vein, rim = (104, 70, 68), (150, 92, 86), (58, 40, 40)
-    for face_x in (0, 7):
-        for y in range(39, 46):
-            for x in range(face_x, face_x + 7):
-                lx, ly = x - face_x, y - 39
-                ragged = (lx == 6 and rnd.random() < 0.5) or (ly == 0 and rnd.random() < 0.4)
+    # Ear membranes: a 0-wide box (texOffs 0,32; h 10, d 10): faces at (0,42) and (10,42), 10x10 each.
+    memb, vein, rim = (96, 58, 58), (150, 88, 82), (44, 30, 30)
+    for face_x in (0, 10):
+        for y in range(42, 52):
+            for x in range(face_x, face_x + 10):
+                lx, ly = x - face_x, y - 42
+                ragged = (lx == 9 and rnd.random() < 0.5) or (ly == 0 and rnd.random() < 0.45) or (lx + ly < 2)
                 if ragged:
                     continue
-                c = rim if lx >= 5 or ly <= 1 else memb
-                if (lx - 1) == (6 - ly) // 2 or lx == 1 or (lx + ly) % 5 == 0 and lx > 1:
+                c = rim if lx >= 8 or ly <= 1 else memb
+                if lx == 1 or (lx - 1) == (9 - ly) // 2 or (lx + 2 * ly) % 7 == 0 and lx > 2:
                     c = vein
                 im.putpixel((x, y), jitter(c, rnd, 6))
     out = os.path.join(ROOT, "entity", "drawn.png")

@@ -247,7 +247,7 @@ public final class Terrain {
     static BlockState verge(SiteCanvas c, int x, int z, int d) {
         double n = c.noise(x, z, 9.0);
         if (d <= 2 && c.noise(x + 77, z - 41, 3.0) > 0.35) {
-            return Blocks.COARSE_DIRT.defaultBlockState();
+            return Blocks.MUD.defaultBlockState(); // churned edge
         }
         return (n < -0.45 ? Blocks.PODZOL : Blocks.GRASS_BLOCK).defaultBlockState();
     }

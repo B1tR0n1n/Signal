@@ -53,22 +53,22 @@ public final class DrawnModel extends HierarchicalModel<DrawnEntity> {
                     .addBox(-1F, 0F, -1F, 2, 9, 2), PartPose.offsetAndRotation(0F, 8.5F, 0F, 0.6F, 0F, 0F));
         }
         PartDefinition torso = r.addOrReplaceChild("torso", CubeListBuilder.create().texOffs(0, 0)
-                .addBox(-3.5F, -12F, -2F, 7, 12, 4), PartPose.offsetAndRotation(0F, 8F, 0F, 0.35F, 0F, 0F));
+                .addBox(-3.5F, -12F, -2F, 7, 12, 4), PartPose.offsetAndRotation(0F, 8F, 0F, 0.62F, 0F, 0F));
         PartDefinition neck = torso.addOrReplaceChild("neck", CubeListBuilder.create().texOffs(48, 0)
-                .addBox(-1F, -4F, -1F, 2, 4, 2), PartPose.offsetAndRotation(0F, -12F, -0.5F, 0.35F, 0F, 0F));
+                .addBox(-1F, -4F, -1F, 2, 4, 2), PartPose.offsetAndRotation(0F, -12F, -0.5F, 0.55F, 0F, 0F));
         PartDefinition head = neck.addOrReplaceChild("head", CubeListBuilder.create().texOffs(24, 0)
-                .addBox(-2.5F, -5F, -4F, 5, 5, 6), PartPose.offsetAndRotation(0F, -3.5F, 0F, -0.6F, 0F, 0F));
+                .addBox(-2.5F, -5F, -4F, 5, 5, 6), PartPose.offsetAndRotation(0F, -3.5F, 0F, -1.05F, 0F, 0F));
         head.addOrReplaceChild("left_ear", CubeListBuilder.create().texOffs(0, 32)
-                .addBox(0F, -6F, -3.5F, 0, 7, 7), PartPose.offsetAndRotation(2.5F, -2F, 0F, 0F, 0.55F, -0.25F));
+                .addBox(0F, -9F, -5F, 0, 10, 10), PartPose.offsetAndRotation(2.5F, -2F, 0F, 0F, 0.7F, -0.35F));
         head.addOrReplaceChild("right_ear", CubeListBuilder.create().texOffs(0, 32).mirror()
-                .addBox(0F, -6F, -3.5F, 0, 7, 7), PartPose.offsetAndRotation(-2.5F, -2F, 0F, 0F, -0.55F, 0.25F));
+                .addBox(0F, -9F, -5F, 0, 10, 10), PartPose.offsetAndRotation(-2.5F, -2F, 0F, 0F, -0.7F, 0.35F));
         for (int side : new int[]{-1, 1}) {
             String name = side < 0 ? "right_arm" : "left_arm";
             PartDefinition arm = torso.addOrReplaceChild(name, CubeListBuilder.create().texOffs(20, 16).mirror(side > 0)
-                    .addBox(-1F, 0F, -1F, 2, 10, 2), PartPose.offsetAndRotation(side * 4.2F, -11F, 0F, -0.2F, 0F, side * -0.12F));
+                    .addBox(-1F, 0F, -1F, 2, 11, 2), PartPose.offsetAndRotation(side * 4.2F, -11F, 0F, -0.75F, 0F, side * -0.12F));
             arm.addOrReplaceChild("forearm", CubeListBuilder.create().texOffs(28, 16).mirror(side > 0)
-                    .addBox(-1F, 0F, -1F, 2, 10, 2).texOffs(36, 16).addBox(-1.5F, 10F, -1.5F, 3, 3, 1),
-                    PartPose.offsetAndRotation(0F, 9.5F, 0F, -0.35F, 0F, 0F));
+                    .addBox(-1F, 0F, -1F, 2, 12, 2).texOffs(36, 16).addBox(-1.5F, 12F, -1.5F, 3, 3, 1),
+                    PartPose.offsetAndRotation(0F, 10.5F, 0F, 0.15F, 0F, 0F));
         }
         return LayerDefinition.create(mesh, 64, 64);
     }
