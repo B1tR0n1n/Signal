@@ -24,12 +24,13 @@ final class Paths {
     record Style(Block core, Block coreAlt, Block coreSlab, Block shoulder, Block shoulderAlt, Block shoulderSlab) {
     }
 
-    static final Style ROAD = new Style(Blocks.COARSE_DIRT, Blocks.GRAVEL, Blocks.ANDESITE_SLAB,
-            Blocks.MUD, Blocks.PODZOL, Blocks.MUD_BRICK_SLAB);
-    static final Style FOOTPATH = new Style(Blocks.COARSE_DIRT, Blocks.GRAVEL, Blocks.ANDESITE_SLAB,
-            Blocks.PODZOL, Blocks.COARSE_DIRT, Blocks.MUD_BRICK_SLAB);
+    // Dark trodden earth and gravel, never coarse dirt: in-game coarse dirt reads bright orange (decision #47).
+    static final Style ROAD = new Style(Blocks.PODZOL, Blocks.GRAVEL, Blocks.TUFF_SLAB,
+            Blocks.MUD, Blocks.PODZOL, Blocks.TUFF_SLAB);
+    static final Style FOOTPATH = new Style(Blocks.PODZOL, Blocks.GRAVEL, Blocks.TUFF_SLAB,
+            Blocks.MUD, Blocks.PODZOL, Blocks.TUFF_SLAB);
     static final Style RAILBED = new Style(Blocks.GRAVEL, Blocks.GRAVEL, Blocks.ANDESITE_SLAB,
-            Blocks.GRAVEL, Blocks.COARSE_DIRT, Blocks.ANDESITE_SLAB);
+            Blocks.GRAVEL, Blocks.TUFF, Blocks.ANDESITE_SLAB);
 
     private Paths() {
     }

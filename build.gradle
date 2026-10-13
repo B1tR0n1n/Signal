@@ -58,6 +58,10 @@ neoForge {
             if (project.hasProperty('quickPlayWorld')) {
                 programArguments.addAll '--quickPlaySingleplayer', project.property('quickPlayWorld').toString()
             }
+            // ./gradlew runClient -PquickPlayServer=127.0.0.1:25565   (used by tools/playtest.py)
+            if (project.hasProperty('quickPlayServer')) {
+                programArguments.addAll '--quickPlayMultiplayer', project.property('quickPlayServer').toString()
+            }
             // Comma-separated list of namespaces to load gametests from. Empty = all namespaces.
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
         }

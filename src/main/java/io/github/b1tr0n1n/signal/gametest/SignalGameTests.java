@@ -194,6 +194,10 @@ public final class SignalGameTests {
                 }
             }
         }
+        // A clump of leaves hanging in the air with no trunk (what a cut tree crown leaves behind).
+        for (BlockPos q : new BlockPos[]{new BlockPos(30, 26, 30), new BlockPos(31, 26, 30), new BlockPos(30, 27, 30)}) {
+            helper.setBlock(q, Blocks.SPRUCE_LEAVES.defaultBlockState().setValue(net.minecraft.world.level.block.LeavesBlock.PERSISTENT, true));
+        }
         BlockPos anchor = helper.absolutePos(new BlockPos(0, 8, 72));
         // Forge's FakePlayer: a real ServerPlayer with a no-op network handler. (The vanilla mock player
         // cannot be placed on a Forge-family server: login hooks need a Netty pipeline.)

@@ -247,6 +247,58 @@ final class SiteCanvas {
         return banks.size();
     }
 
+    /**
+     * Final pass: tree crowns whose trunk was cut must not hang in the air. Every connected clump of leaves
+     * inside the site that touches no log at all is removed. (Leaf decay would not do it: a clump within six
+     * blocks of another tree's log counts as supported and stays forever. Seen in the playtest.)
+     *
+     * @return leaves removed
+     */
+    int removeOrphanLeaves() {
+        java.util.Set<BlockPos> leaves = new java.util.HashSet<>();
+        BlockPos.MutableBlockPos p = new BlockPos.MutableBlockPos();
+        for (int x = bounds.minX(); x <= bounds.maxX(); x++) {
+            for (int z = bounds.minZ(); z <= bounds.maxZ(); z++) {
+                for (int y = bounds.minY(); y <= bounds.maxY(); y++) {
+                    if (level.getBlockState(p.set(x, y, z)).getBlock() instanceof LeavesBlock) {
+                        leaves.add(p.immutable());
+                    }
+                }
+            }
+        }
+        int removed = 0;
+        java.util.Set<BlockPos> seen = new java.util.HashSet<>();
+        for (BlockPos start : leaves) {
+            if (!seen.add(start)) {
+                continue;
+            }
+            List<BlockPos> clump = new ArrayList<>();
+            java.util.ArrayDeque<BlockPos> queue = new java.util.ArrayDeque<>(List.of(start));
+            boolean held = false;
+            while (!queue.isEmpty()) {
+                BlockPos q = queue.poll();
+                clump.add(q);
+                for (Direction d : Direction.values()) {
+                    BlockPos n = q.relative(d);
+                    if (leaves.contains(n)) {
+                        if (seen.add(n)) {
+                            queue.add(n);
+                        }
+                    } else if (!bounds.isInside(n) || level.getBlockState(n).is(BlockTags.LOGS)) {
+                        held = true; // touches a log, or runs out of the site where we cannot tell
+                    }
+                }
+            }
+            if (!held) {
+                for (BlockPos q : clump) {
+                    clear(q.getX(), q.getY(), q.getZ());
+                }
+                removed += clump.size();
+            }
+        }
+        return removed;
+    }
+
     /** Final pass: connect bars, panes, fences, walls and stairs to their neighbours. */
     void finishShapes() {
         for (BlockPos p : needsShape) {
