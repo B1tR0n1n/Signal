@@ -100,3 +100,7 @@ Reversible choices made during implementation. Newest last.
     used to switch mob spawning off for the whole world, which also stopped wildlife from spawning after
     generation. Now natural hostile spawns are refused only inside the site bounds (plus 8 blocks) while a
     campaign is active (`CampaignEvents#onSpawnPosition`); game rules are untouched.
+35. **Owner-drawn art is a first-class texture source.** The owner draws in Aseprite; sources live in
+    `art/` and export to the texture paths with `tools/export_art.sh`. Owner art replaces a generated texture
+    of the same path, and `gen_textures.py` skips it. Mob skins follow a UV layout template supplied with each
+    new mob model. Every file is listed under "Owner art" in ASSET_PROVENANCE.

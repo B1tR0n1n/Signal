@@ -11,6 +11,16 @@ or any other game; no ripped audio, textures, models or music.
 
 Regenerate with `python3 tools/gen_textures.py` (requires Pillow).
 
+### Owner art
+
+Textures drawn by the owner (b1tr0n1n) in Aseprite. Sources live in `art/` (`.aseprite`) and are exported to
+the paths below with `sh tools/export_art.sh`; `gen_textures.py` never overwrites them. Licence: project
+licence (All Rights Reserved).
+
+| Files | Source | Notes |
+| --- | --- | --- |
+| *(none yet)* | | |
+
 ## Models, blockstates, language
 
 `assets/signal/blockstates/*.json`, `assets/signal/models/**/*.json` and `assets/signal/lang/en_us.json`

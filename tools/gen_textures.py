@@ -81,7 +81,14 @@ def weathered_panel(seed, base=OLIVE):
     return im, rnd
 
 
+ART = os.path.join(os.path.dirname(__file__), "..", "art")
+
+
 def save(im, rel):
+    # A texture the owner drew in Aseprite (art/<rel>.aseprite) wins: never overwrite it with a generated one.
+    if os.path.exists(os.path.join(ART, os.path.splitext(rel)[0] + ".aseprite")):
+        print("  kept owner art:", rel)
+        return
     path = os.path.join(ROOT, rel)
     os.makedirs(os.path.dirname(path), exist_ok=True)
     im.save(path)
