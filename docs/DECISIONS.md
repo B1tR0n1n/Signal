@@ -177,3 +177,13 @@ Reversible choices made during implementation. Newest last.
     goals every other tick by tickCount + id); the goal keeps its own countdown. Verified by 6 new GameTests;
     the hearing scan in live play, natural spawning, and the look and sound in a real client are not yet
     verified.
+47. **A playtest pilot in the dev client (2026-10-11).** Synthetic OS input cannot turn the camera of a
+    pointer-locked XWayland window and chat-command driving is jerky, so `client/PlaytestPilot` lets a local
+    script play: it holds the real key mappings, steers along an A* route over loaded blocks
+    (`client/PilotPath`: step up 1, drop 3, no fences, bars or corner cutting), turns the view per frame
+    through `Entity.turn`, presses screen buttons by label and quick-moves container slots. It is off
+    unless `SIGNAL_PILOT_PORT` is set and then listens on loopback only; `tools/pilot.py` is the client.
+    Reversible: delete the two classes and the script. Not a gameplay feature and never on in a normal run.
+    Later the same day it gained creative building (place against a face with a real right-click, hold,
+    break, fly, alt, a client-side ground scan, several connections); `tools/pilot_builds/listening_post.py`
+    builds a hut and mast by hand from a few flying work stations, then re-places anything the world lacks.
