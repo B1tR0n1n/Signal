@@ -169,8 +169,16 @@ public final class BellwetherScenario {
         c.containFluids();
         c.finishShapes();
 
-        // Start a few blocks into the established road, facing along it toward the distant tower.
+        // Start a few blocks into the established road, facing along it toward the distant tower, on the first
+        // sample with a full block underfoot: a ramp slab there put the player inside it, stuck (playtest 2026-10-11).
         Paths.Sample s0 = road.get(Math.min(road.size() - 1, (int) (8 / 0.4)));
+        for (int i = (int) (8 / 0.4); i < Math.min(road.size(), (int) (30 / 0.4)); i++) {
+            Paths.Sample s = road.get(i);
+            if (standable(c, (int) Math.floor(s.x()), Paths.walkY(s.height()), (int) Math.floor(s.z()))) {
+                s0 = s;
+                break;
+            }
+        }
         BlockPos start = new BlockPos((int) Math.floor(s0.x()), Paths.walkY(s0.height()), (int) Math.floor(s0.z()));
         float yaw = (float) Math.toDegrees(-Math.atan2(s0.dirX(), s0.dirZ()));
         BlockPos entrance = frame.offset(ServiceFacility.DOOR).offset(0, 0, 1);
@@ -307,7 +315,7 @@ public final class BellwetherScenario {
                 if (along < 0 || along > len || across > 2.0 || !c.get(xx, walk, zz).isAir()) {
                     continue;
                 }
-                c.put(xx, padY, zz, (across > 0.9 ? Blocks.MUD : Blocks.PODZOL).defaultBlockState());
+                c.put(xx, padY, zz, (across > 0.9 ? Blocks.MUD : Blocks.MUDDY_MANGROVE_ROOTS).defaultBlockState());
             }
         }
         int cx = ax + CX0, cz = az + CZ0;
@@ -352,21 +360,28 @@ public final class BellwetherScenario {
 
     /**
      * Compound ground: weathered tuff hardstanding broken up by bare packed earth, dark mud hollows where the
-     * rain stands, and grass and podzol creeping in along the fence. Broad, low-contrast patches.
+     * rain stands, and grass and dark earth creeping in along the fence. Broad, low-contrast patches.
      */
     private static BlockState yardGround(SiteCanvas c, int ax, int az, int x, int z) {
         int edge = Math.min(Math.min(x - (ax + CX0), (ax + CX1) - x), Math.min(z - (az + CZ0), (az + CZ1) - z));
         double big = c.noise(x, z, 15.0), mid = c.noise(x + 500, z - 300, 5.0);
         if (edge <= 1 || edge == 2 && mid > 0.2) {
-            return (mid < -0.3 ? Blocks.PODZOL : Blocks.GRASS_BLOCK).defaultBlockState();
+            return (mid < -0.3 ? Blocks.MUDDY_MANGROVE_ROOTS : Blocks.GRASS_BLOCK).defaultBlockState();
         }
         if (big < -0.5 || big < -0.3 && mid < 0.0) {
             return Blocks.MUD.defaultBlockState();
         }
         if (big > 0.5 && mid > -0.1) {
-            return Blocks.PODZOL.defaultBlockState(); // bare trodden earth where the hardstanding broke up
+            return Blocks.MUDDY_MANGROVE_ROOTS.defaultBlockState(); // bare trodden earth where the hardstanding broke up
         }
         return (mid > 0.75 ? Blocks.ANDESITE : Blocks.TUFF).defaultBlockState();
+    }
+
+    /** Feet and head in open air over a full, dry block: somewhere a player can be put down and walk off. */
+    static boolean standable(SiteCanvas c, int x, int y, int z) {
+        BlockState floor = c.get(x, y - 1, z);
+        return c.get(x, y, z).isAir() && c.get(x, y + 1, z).isAir()
+                && !floor.isAir() && floor.getFluidState().isEmpty() && !(floor.getBlock() instanceof SlabBlock);
     }
 
     /** A house plot in Bellwether: north-west wall corner and the house drawn on it. */
@@ -391,7 +406,7 @@ public final class BellwetherScenario {
             t.pad(c, p.x() - 2, p.z() - 3, p.x() + w + 1, p.z() + p.house().backRows() - 1, floor[i], 4, 12,
                     (x, z) -> {
                         double n = c.noise(x, z, 6.0);
-                        return (n > 0.45 ? Blocks.PODZOL : n < -0.5 ? Blocks.MUD : Blocks.GRASS_BLOCK).defaultBlockState();
+                        return (n > 0.45 ? Blocks.MUDDY_MANGROVE_ROOTS : n < -0.5 ? Blocks.MUD : Blocks.GRASS_BLOCK).defaultBlockState();
                     });
         }
         // The lane: road fork -> each doorstep in turn, each leg pinned to the levels it joins.

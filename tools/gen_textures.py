@@ -361,8 +361,12 @@ def drawn_entity():
     for y in range(ty, ty + 12):
         im.putpixel((tx + 3, y), jitter(skin_d, rnd, 4))
     hx, hy = box(24, 0, 5, 5, 6)                         # head: smooth and eyeless, one vertical seam
+    # Glow layer (drawn_glow.png, rendered full-bright and additive): the seam and the ear veins carry a faint
+    # cold phosphorescence, the one thing a player can pick out in the dark. Black adds nothing.
+    glow = Image.new("RGBA", (W, W), (0, 0, 0, 0))
     for y in range(hy, hy + 5):
         im.putpixel((hx + 2, y), jitter((38, 30, 30), rnd, 3))
+        glow.putpixel((hx + 2, y), (96, 104, 92, 255))
     box(48, 0, 2, 4, 2)                                  # neck
     box(0, 16, 3, 9, 3)                                  # thigh
     box(12, 16, 2, 9, 2)                                 # shin
@@ -385,10 +389,12 @@ def drawn_entity():
                 c = rim if lx >= 8 or ly <= 1 else memb
                 if lx == 1 or (lx - 1) == (9 - ly) // 2 or (lx + 2 * ly) % 7 == 0 and lx > 2:
                     c = vein
+                    glow.putpixel((x, y), (40, 44, 40, 255))
                 im.putpixel((x, y), jitter(c, rnd, 6))
     out = os.path.join(ROOT, "entity", "drawn.png")
     os.makedirs(os.path.dirname(out), exist_ok=True)
     im.save(out)
+    glow.save(os.path.join(ROOT, "entity", "drawn_glow.png"))
 
 
 if __name__ == "__main__":

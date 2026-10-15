@@ -241,15 +241,15 @@ public final class Terrain {
     }
 
     /**
-     * Top block for re-graded ground beside a pad or route: grass, with podzol drifts, and trodden coarse
-     * dirt only right at the edge ({@code d} 1-2 blocks out). Coherent patches, never per-block confetti.
+     * Top block for re-graded ground beside a pad or route: grass, with drifts of dark rooty earth, and churned
+     * mud only right at the edge ({@code d} 1-2 blocks out). Coherent patches, never per-block confetti.
      */
     static BlockState verge(SiteCanvas c, int x, int z, int d) {
         double n = c.noise(x, z, 9.0);
         if (d <= 2 && c.noise(x + 77, z - 41, 3.0) > 0.35) {
             return Blocks.MUD.defaultBlockState(); // churned edge
         }
-        return (n < -0.45 ? Blocks.PODZOL : Blocks.GRASS_BLOCK).defaultBlockState();
+        return (n < -0.45 ? Blocks.MUDDY_MANGROVE_ROOTS : Blocks.GRASS_BLOCK).defaultBlockState();
     }
 
     /**

@@ -103,6 +103,7 @@
   "subtitles.signal.drawn_hurt": "Drawn shrieks",
   "subtitles.signal.drawn_death": "Drawn falls silent",
   "message.signal.respawn_here": "This place has power now. If you fall, you will wake here.",
+  "message.signal.pack_where": "Your pack is where you fell: %s %s %s, %s blocks to the %s. It will still be there.",
   "key.signal.reload": "Reload",
   "key.categories.signal": "SIGNAL",
   "message.signal.reload.progress": "Reloading... %s / %s  (%s spare)",

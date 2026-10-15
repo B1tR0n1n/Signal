@@ -11,6 +11,7 @@ public final class DrawnRenderer extends MobRenderer<DrawnEntity, DrawnModel> {
 
     public DrawnRenderer(EntityRendererProvider.Context context) {
         super(context, new DrawnModel(context.bakeLayer(DrawnModel.LAYER)), 0.55F);
+        addLayer(new DrawnGlowLayer(this));
     }
 
     @Override

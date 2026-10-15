@@ -4,7 +4,9 @@ import io.github.b1tr0n1n.signal.command.SignalCommands;
 import io.github.b1tr0n1n.signal.domain.BellwetherSite;
 import io.github.b1tr0n1n.signal.domain.Service;
 import io.github.b1tr0n1n.signal.domain.RadioMessage;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -12,7 +14,9 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDropsEvent;
 import net.neoforged.neoforge.event.entity.living.MobSpawnEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
@@ -47,6 +51,50 @@ public final class CampaignEvents {
                 && data.bounds().inflatedBy(8).isInside(BlockPos.containing(event.getX(), event.getY(), event.getZ()))) {
             event.setResult(MobSpawnEvent.PositionCheck.Result.FAIL);
         }
+    }
+
+    /**
+     * Elias's pack stays where he fell. The things dropped on a participant's death in the campaign dimension
+     * never despawn and glow, so they can be found again; the site's only ammunition must not vanish after five
+     * minutes (playtest 2026-10-11: one death ended the scenario's combat). Other worlds and players: vanilla.
+     */
+    @SubscribeEvent
+    public void onDrops(LivingDropsEvent event) {
+        if (!(event.getEntity() instanceof ServerPlayer player) || !inCampaign(player)) {
+            return;
+        }
+        for (ItemEntity drop : event.getDrops()) {
+            drop.setUnlimitedLifetime();
+            drop.setGlowingTag(true);
+        }
+    }
+
+    /** On waking, say where the pack is. */
+    @SubscribeEvent
+    public void onRespawn(PlayerEvent.PlayerRespawnEvent event) {
+        if (event.isEndConquered() || !(event.getEntity() instanceof ServerPlayer player) || !inCampaign(player)) {
+            return;
+        }
+        player.getLastDeathLocation()
+                .filter(g -> g.dimension().equals(player.level().dimension()))
+                .ifPresent(g -> {
+                    BlockPos at = g.pos();
+                    int distance = (int) Math.round(Math.sqrt(player.blockPosition().distSqr(at)));
+                    player.sendSystemMessage(Component.translatable("message.signal.pack_where",
+                            at.getX(), at.getY(), at.getZ(), distance, bearing(player.blockPosition(), at)).withStyle(ChatFormatting.GRAY));
+                });
+    }
+
+    private static boolean inCampaign(ServerPlayer player) {
+        SignalCampaignData data = SignalCampaignData.get(player.server);
+        return data.isActive() && data.isParticipant(player.getUUID()) && player.level().dimension().equals(data.dimension());
+    }
+
+    /** Eight-point compass bearing from {@code from} to {@code to} (north is -Z). */
+    static String bearing(BlockPos from, BlockPos to) {
+        double deg = Math.toDegrees(Math.atan2(to.getX() - from.getX(), from.getZ() - to.getZ()));
+        String[] points = {"north", "north-east", "east", "south-east", "south", "south-west", "west", "north-west"};
+        return points[(int) Math.floorMod(Math.round(deg / 45.0), 8)];
     }
 
     @SubscribeEvent

@@ -1,6 +1,6 @@
 # Implementation status
 
-Last updated 2026-10-11. Claims are separated by how they were verified.
+Last updated 2026-10-14 (playtest fixes: see PLAYTEST_NOTES session 2, decisions #48-#50). Claims are separated by how they were verified.
 
 ## Platform
 

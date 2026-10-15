@@ -212,6 +212,12 @@ public final class SignalGameTests {
                 "second create must refuse");
         ScenarioService.begin(level, data);
         check(helper.absolutePos(new BlockPos(0, 0, 0)).getY() < data.bounds().minY(), "bounds must stay above the test floor");
+        BlockPos start = data.start();
+        BlockState underfoot = level.getBlockState(start.below());
+        check(level.getBlockState(start).getCollisionShape(level, start).isEmpty()
+                        && level.getBlockState(start.above()).getCollisionShape(level, start.above()).isEmpty()
+                        && !underfoot.getCollisionShape(level, start.below()).isEmpty(),
+                "the start must be open air over solid ground, got " + level.getBlockState(start) + " over " + underfoot + " at " + start);
         // The site keeps hostiles out without touching the world's spawning: wildlife may still spawn in it.
         check(level.getGameRules().getBoolean(net.minecraft.world.level.GameRules.RULE_DOMOBSPAWNING) == spawningBefore,
                 "creating the site must not change the world's mob spawning rule");

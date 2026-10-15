@@ -312,9 +312,10 @@ final class Prefabs {
                         c.set(x, y, z, Blocks.AIR.defaultBlockState());
                         continue;
                     }
-                    // Faded teal-grey corrugation with rust breaking through.
-                    BlockState s = x % 2 == 0 ? Blocks.CYAN_TERRACOTTA.defaultBlockState() : Blocks.LIGHT_GRAY_TERRACOTTA.defaultBlockState();
-                    if (c.rnd.nextFloat() < 0.14F) {
+                    // One colour of weathered green steel, ribbed by alternating panel and sheet, with rust only
+                    // along the bottom rail (random terracotta read as a pink-and-grey patchwork; playtest 2026-10-11).
+                    BlockState s = (x % 2 == 0 ? Blocks.WAXED_WEATHERED_CUT_COPPER : Blocks.WAXED_WEATHERED_COPPER).defaultBlockState();
+                    if (y == 0 && c.rnd.nextFloat() < 0.3F) {
                         s = Blocks.BROWN_TERRACOTTA.defaultBlockState();
                     }
                     c.set(x, y, z, s);

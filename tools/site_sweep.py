@@ -179,7 +179,8 @@ TRANSPARENT = {"air", "cave_air", "void_air", "barrier", "light", "glass_pane", 
 
 NATURAL_GROUND = {"grass_block", "dirt", "coarse_dirt", "podzol", "mud", "packed_mud", "rooted_dirt", "gravel",
                   "stone", "andesite", "diorite", "granite", "tuff", "deepslate", "sand", "clay", "moss_block",
-                  "mycelium", "dirt_path", "water", "calcite", "cobblestone", "mossy_cobblestone", "snow_block"}
+                  "mycelium", "dirt_path", "water", "calcite", "cobblestone", "mossy_cobblestone", "snow_block",
+                  "muddy_mangrove_roots"}
 
 
 class Palette:

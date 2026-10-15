@@ -187,3 +187,25 @@ Reversible choices made during implementation. Newest last.
     Later the same day it gained creative building (place against a face with a real right-click, hold,
     break, fly, alt, a client-side ground scan, several connections); `tools/pilot_builds/listening_post.py`
     builds a hut and mast by hand from a few flying work stations, then re-places anything the world lacks.
+48. **Trodden ground is mud and muddy mangrove roots (2026-10-14).** An in-game swatch in a Meridian world
+    showed podzol, dirt, rooted dirt and coarse dirt all reading bright orange; only mud and muddy mangrove
+    roots read as dark wet earth. Road core is mud with gravel, footpaths and drifts are muddy roots, the yard's
+    trodden patches and plot ground follow. Both blocks are in `#minecraft:dirt`, so the guard still treats them
+    as terrain. The shipping container is one colour of waxed weathered copper, ribbed, rust only at its base.
+    Reversible: the block constants in `Paths`, `Terrain`, `BellwetherScenario` and `Prefabs`.
+49. **The Drawn: a per-player budget, a dawn retreat, a tell, and a pack that stays (2026-10-14).** Measured
+    on seed 1 before the change: 43 Drawn loaded and 9 within 96 blocks of the village by mid-night, and 13
+    still alive at noon. Natural spawns now need open sky, fewer than 2 within 96 blocks and fewer than 4 within
+    128 blocks of the player it spawns for (`domain/DrawnBudget`, unit-tested). The first cut counted every loaded Drawn and allowed
+    caves: the budget filled with cave spawns 120 blocks off, out of ticking range, and the surface stayed empty. At day a Drawn that is not hunting and has no player within 32
+    blocks leaves (is discarded). Attack damage 5 to 4; the first strike after closing waits a second behind a
+    loud rattle (`WindUpAttackGoal`); a faint full-bright glow on the head seam and ear veins
+    (`DrawnGlowLayer`) is the one thing visible of them at night. On a participant's death in the campaign
+    dimension the dropped items never despawn and glow, and on waking a chat line gives the spot, distance
+    and bearing. Not a corpse block: nothing is written to the world outside the scenario. Reversible: the
+    classes named, `CampaignEvents#onDrops/onRespawn`.
+50. **Start, respawn, corridor, muzzle (2026-10-14).** The start is the first road sample within 30 blocks with
+    open air over a non-slab block (a ramp slab put the player inside it and W did nothing); a GameTest checks
+    the start. The powered-site respawn faces out of the door (yaw 0), not wherever the player looked. Routes
+    always shape the first `Paths.CORRIDOR` (2) apron blocks, so no trunk stands at a route's edge. The muzzle
+    flash is four small flames thrown forward from the gun hand plus smoke, not a still flame at screen centre.

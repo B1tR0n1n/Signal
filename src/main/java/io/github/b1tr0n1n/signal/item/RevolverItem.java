@@ -97,9 +97,15 @@ public final class RevolverItem extends Item {
 
         Vec3 eye = player.getEyePosition();
         Vec3 dir = spread(player, spec.spreadDegrees(), level);
-        Vec3 muzzle = eye.add(dir.scale(0.8));
-        level.sendParticles(ParticleTypes.SMOKE, muzzle.x, muzzle.y, muzzle.z, 4, 0.03, 0.03, 0.03, 0.01);
-        level.sendParticles(ParticleTypes.FLAME, muzzle.x, muzzle.y, muzzle.z, 1, 0.0, 0.0, 0.0, 0.0);
+        Vec3 muzzle = muzzle(player, eye);
+        // A burst of small self-lit flames thrown forward out of the barrel, and a puff of smoke. A still flame hung at
+        // screen centre for a second and read as a torch (playtest 2026-10-11); crit stars are lit by the scene (a big
+        // grey cross at night) and electric sparks start dark. Thrown at speed, the flames leave the camera at once.
+        for (int i = 0; i < 4; i++) {
+            Vec3 v = dir.scale(0.35 + level.random.nextDouble() * 0.35);
+            level.sendParticles(ParticleTypes.SMALL_FLAME, muzzle.x, muzzle.y, muzzle.z, 0, v.x, v.y, v.z, 1.0);
+        }
+        level.sendParticles(ParticleTypes.SMOKE, muzzle.x, muzzle.y, muzzle.z, 5, 0.04, 0.04, 0.04, 0.015);
 
         Vec3 end = eye.add(dir.scale(spec.maxRange()));
         BlockHitResult block = level.clip(new ClipContext(eye, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player));
@@ -122,6 +128,15 @@ public final class RevolverItem extends Item {
                     p.x, p.y, p.z, 8, 0.05, 0.05, 0.05, 0.1);
         }
         Noise.emit(level, player.position(), spec.noiseRadius());
+    }
+
+    /** Where the barrel is: ahead of the eye, toward the gun hand and a little low, as the held model draws it. */
+    private static Vec3 muzzle(Player player, Vec3 eye) {
+        Vec3 look = player.getLookAngle();
+        Vec3 right = look.cross(new Vec3(0, 1, 0));
+        right = right.lengthSqr() < 1.0E-6 ? Vec3.ZERO : right.normalize();
+        boolean rightHand = (player.getUsedItemHand() == InteractionHand.MAIN_HAND) == (player.getMainArm() == net.minecraft.world.entity.HumanoidArm.RIGHT);
+        return eye.add(look.scale(0.9)).add(right.scale(rightHand ? 0.32 : -0.32)).add(0, -0.22, 0);
     }
 
     /** The aim, offset by a random yaw and pitch within the spread: the same cone whichever way you face. */

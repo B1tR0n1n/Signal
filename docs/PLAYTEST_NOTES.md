@@ -81,3 +81,35 @@ E. **good — the revolver model in hand** now sits right and points forward; fi
     Not a SIGNAL bug.
 2. **rough — half-rendered frame.** One capture at night showed the left ~55 % of the window drawn
    and the right side dark. Could be a capture artefact during a resize; watch for it.
+
+## Session 2 — 2026-10-14
+
+Headless client (Xvfb, Mesa) on fresh seed-1 worlds, the pilot driving, the server over RCON. Night counts
+by fast-forwarding with `/tick sprint` and counting with `execute if entity`.
+
+### Fixed and re-checked in the client
+- **1 (spawn pit):** confirmed: start at y 68.0 inside a bottom tuff slab; W did nothing. Now 121.5 68.9 on
+  mud, W walks 11 blocks in 3 s. Respawn there works too.
+- **3 (tree at the road):** walked into a trunk on the road's verge 8 blocks from the start. The first two
+  apron blocks are now always cleared; the same walk passes.
+- **5 (orange yard), and every path:** podzol read as orange as coarse dirt did. A swatch of eight blocks in
+  the world settled it: mud and muddy mangrove roots read dark; podzol, dirt, rooted and coarse dirt do not.
+- **10 (container):** now one colour of weathered green steel, ribbed, rust along the base.
+- **A (pack lost on death):** drops on death never despawn and glow; still there after 8000 ticks; on
+  waking: "Your pack is where you fell: 160 66 172, 39 blocks to the east."
+- **B (crowds):** before, one night at the village: 43 loaded, 9 within 96, 13 alive at noon. After: 4
+  within 128 all night, 0-2 within 96, all gone by day (frozen ones leave the moment they wake). Getting
+  there took four measured iterations: caves filled the budget; a spawn-centred count let 6 in; counting
+  only ticking ones let the outer ring fill to 14; the final rule counts every living Drawn within 128 of the
+  player and spawns only under open sky.
+- **C (unseen killer):** damage 5 to 4; a loud rattle and a 1 s wait before the first strike (GameTest, which
+  fails without the wait); the head seam and ear veins glow faintly; both Drawn readable at 10 and 20 blocks at
+  midnight.
+- **D (muzzle flash):** flames now leave the barrel at the gun hand and fly off; seen in slow motion (`/tick
+  rate 2`). Crit stars showed as a grey cross at night and electric sparks start dark, so neither was kept.
+- **13 (respawn faces a wall):** respawn at the facility now faces out to the yard (not re-checked by dying
+  there).
+
+### Still open
+- 4 (west gate terraces), 7-9 (triage cost, spare fuse, pump gauge), 2 (half frame, not seen again).
+- Sound by ear, shaders, real GPU: not checked here.

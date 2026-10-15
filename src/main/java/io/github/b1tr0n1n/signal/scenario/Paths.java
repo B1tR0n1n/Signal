@@ -24,13 +24,17 @@ final class Paths {
     record Style(Block core, Block coreAlt, Block coreSlab, Block shoulder, Block shoulderAlt, Block shoulderSlab) {
     }
 
-    // Dark trodden earth and gravel, never coarse dirt: in-game coarse dirt reads bright orange (decision #47).
-    static final Style ROAD = new Style(Blocks.PODZOL, Blocks.GRAVEL, Blocks.TUFF_SLAB,
-            Blocks.MUD, Blocks.PODZOL, Blocks.TUFF_SLAB);
-    static final Style FOOTPATH = new Style(Blocks.PODZOL, Blocks.GRAVEL, Blocks.TUFF_SLAB,
-            Blocks.MUD, Blocks.PODZOL, Blocks.TUFF_SLAB);
+    // Dark wet earth and gravel. Podzol, dirt, rooted and coarse dirt all read bright orange in-game; only mud
+    // and muddy mangrove roots read as dark trodden ground (in-game swatch, 2026-10-14; decision #48).
+    static final Style ROAD = new Style(Blocks.MUD, Blocks.GRAVEL, Blocks.TUFF_SLAB,
+            Blocks.MUDDY_MANGROVE_ROOTS, Blocks.MUD, Blocks.TUFF_SLAB);
+    static final Style FOOTPATH = new Style(Blocks.MUDDY_MANGROVE_ROOTS, Blocks.GRAVEL, Blocks.TUFF_SLAB,
+            Blocks.MUD, Blocks.MUDDY_MANGROVE_ROOTS, Blocks.TUFF_SLAB);
     static final Style RAILBED = new Style(Blocks.GRAVEL, Blocks.GRAVEL, Blocks.ANDESITE_SLAB,
             Blocks.GRAVEL, Blocks.TUFF, Blocks.ANDESITE_SLAB);
+
+    /** Apron blocks beside a shoulder that are always cleared of trees. */
+    static final int CORRIDOR = 2;
 
     private Paths() {
     }
@@ -142,7 +146,9 @@ final class Paths {
                 int g = t.level(x, z);
                 int k = (int) Math.ceil(cell.dist - shoulderHalf);
                 int target = (int) Math.round((walk - 1) + (g - (walk - 1)) * Terrain.blend(k, apron));
-                if (target != g && !(t.wetAt(x, z) && target <= g)) { // never dig into standing water
+                // The first CORRIDOR blocks of apron are always shaped, even with no re-grade, so no trunk stands at
+                // the very edge of a route (playtest: walked into a spruce on the road's verge).
+                if ((target != g || k <= CORRIDOR) && !(t.wetAt(x, z) && target <= g)) { // never dig into standing water
                     t.shape(c, x, z, target, Terrain.verge(c, x, z, k), Math.max(target, g) + headroom / 2);
                 }
             }

@@ -4,6 +4,7 @@ import com.mojang.authlib.GameProfile;
 import io.github.b1tr0n1n.signal.SignalMod;
 import io.github.b1tr0n1n.signal.domain.FirearmSpec;
 import io.github.b1tr0n1n.signal.entity.DrawnEntity;
+import io.github.b1tr0n1n.signal.entity.WindUpAttackGoal;
 import io.github.b1tr0n1n.signal.entity.HearPlayerGoal;
 import io.github.b1tr0n1n.signal.item.RevolverItem;
 import io.github.b1tr0n1n.signal.registry.ModEntities;
@@ -157,6 +158,15 @@ public final class SurvivalGameTests {
         ModItems.REVOLVER.get().fire(helper.getLevel(), p, p.getMainHandItem());
         check(!Reloading.isReloading(p), "pulling the trigger stops the reload");
         Reloading.cancel(p);
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty_5")
+    public static void theDrawnRattleAndWaitBeforeTheFirstStrike(GameTestHelper helper) {
+        DrawnEntity d = drawn(helper, new BlockPos(2, 1, 2));
+        WindUpAttackGoal goal = new WindUpAttackGoal(d, 1.3);
+        goal.start();
+        check(goal.ticksToStrike() >= 20, "the first strike must wait at least a second, waits " + goal.ticksToStrike());
         helper.succeed();
     }
 

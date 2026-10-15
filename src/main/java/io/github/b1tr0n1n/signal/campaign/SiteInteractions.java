@@ -97,7 +97,8 @@ public final class SiteInteractions {
                 player.sendSystemMessage(Component.translatable("message.signal.generator.closed",
                         BellwetherBus.GENERATOR_SUPPLY, bus.configuredDemand()).withStyle(ChatFormatting.GREEN));
                 // A powered site is somewhere to come back to: respawn here from now on.
-                player.setRespawnPosition(level.dimension(), data.facilityEntrance(), player.getYRot(), true, false);
+                // Face out through the door to the yard (south), not at the frame (playtest 2026-10-11).
+                player.setRespawnPosition(level.dimension(), data.facilityEntrance(), 0.0F, true, false);
                 player.sendSystemMessage(Component.translatable("message.signal.respawn_here").withStyle(ChatFormatting.GRAY));
                 changed(level, data, o.delivered());
             }

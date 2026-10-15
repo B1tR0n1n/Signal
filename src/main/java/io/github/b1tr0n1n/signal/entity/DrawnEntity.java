@@ -1,5 +1,6 @@
 package io.github.b1tr0n1n.signal.entity;
 
+import io.github.b1tr0n1n.signal.domain.DrawnBudget;
 import io.github.b1tr0n1n.signal.registry.ModSounds;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
@@ -8,11 +9,11 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
-import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +39,7 @@ public class DrawnEntity extends Monster {
         return Monster.createMonsterAttributes()
                 .add(Attributes.MAX_HEALTH, 26.0)
                 .add(Attributes.MOVEMENT_SPEED, 0.27)
-                .add(Attributes.ATTACK_DAMAGE, 5.0)
+                .add(Attributes.ATTACK_DAMAGE, 4.0)
                 .add(Attributes.FOLLOW_RANGE, 32.0)
                 .add(Attributes.ARMOR, 1.0)
                 .add(Attributes.STEP_HEIGHT, 1.0);
@@ -47,7 +48,7 @@ public class DrawnEntity extends Monster {
     @Override
     protected void registerGoals() {
         goalSelector.addGoal(0, new FloatGoal(this));
-        goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.3, false));
+        goalSelector.addGoal(2, new WindUpAttackGoal(this, 1.3));
         goalSelector.addGoal(3, new InvestigateNoiseGoal(this, 1.15));
         goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.7));
         goalSelector.addGoal(7, new RandomLookAroundGoal(this));
@@ -83,6 +84,13 @@ public class DrawnEntity extends Monster {
         }
         if (alertCooldown > 0) {
             alertCooldown--;
+        }
+        if (!level().isClientSide && tickCount % 20 == 0 && !isPersistenceRequired()) {
+            Player nearest = level().getNearestPlayer(this, -1.0);
+            double d = nearest == null ? Double.MAX_VALUE : distanceTo(nearest);
+            if (DrawnBudget.retreatsAtDawn(level().isDay(), getTarget() != null, d)) {
+                discard(); // back into the trees, unseen
+            }
         }
     }
 
